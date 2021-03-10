@@ -139,14 +139,15 @@ def get_temps_dests2(BB007,ctx_type):
 
     # %% Pick the resolution and split to small brick
     BB007=BB007+8
-    sBBi = np.copy(BB007)
+
+    BB007M = N_BackForth(BB007)
     
     BB007_ro = np.unique(BB007[:,[1,0,2]],axis=0)
     BB007[:,[1,0,2]] = BB007_ro
     del BB007_ro
 
     
-    uBlockiM = N_BackForth(sBBi)
+    
 
     ncPC = int(np.max(BB007[:,1])+10)
     nrPC = int(np.max(BB007[:,0])+10)
@@ -175,7 +176,7 @@ def get_temps_dests2(BB007,ctx_type):
     ##BURADAN DEVAM!!!!!!!!!!!
     # %% Find sections in BB007M
     
-    BB007M = np.copy(uBlockiM)
+
     BB007M_ro = np.unique(BB007M[:,[1,0,2]],axis=0)
     BB007M[:,[1,0,2]] = BB007M_ro
     del BB007M_ro

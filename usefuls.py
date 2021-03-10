@@ -50,7 +50,7 @@ def find_diff_rows_with_ind(A,B):
             
     AB_diff_rows = AB_diff_rows[0:n_diff_rows,:]
     diff_row_indsA = diff_row_indsA[0:n_diff_rows]
-    return AB_diff_rows,diff
+    return AB_diff_rows,diff_row_indsA
 
 
 def find_diff_rows(A,B):

@@ -11,23 +11,38 @@ sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/
 
 import arithmeticcoding as arc
 
-def Coding_with_AC(Temps,Desds,model,ac_model):
+def Coding_with_AC(Temps,Desds,model,ac_model,batch_size):
 
     nTemps = Temps.shape[0]
+    n_batches = np.ceil(nTemps/batch_size).astype('int')
+    for i_batch in range(n_batches):
+        
+        # symb = Desds[iT,0]
+        # Temp = Temps[iT:(iT+1),:]
+        symbs = Desds[i_batch*batch_size:(i_batch+1)*batch_size]
+        b_Temps = Temps[i_batch*batch_size:(i_batch+1)*batch_size,:]
+        b_probs = model.model(b_Temps).numpy()        
 
-    for iT in range(nTemps):
-        
-        symb = Desds[iT,0]
-        Temp = Temps[iT:(iT+1),:]
-        probs = model.model(Temp).numpy()[0,:]
-        freqlist = list(np.round(probs*1000000).astype('int'))
-        # freqlist = list(probs)
-        # prob = probs[symb]
-        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist ))
-        ac_model.encode_symbol(freqs,symb)
-        
-        if iT%10000==0:
-            print(str(iT) + '/' + str(nTemps) )
+        for icont in range(b_probs.shape[0]):
+            symb = symbs[icont,0]
+            probs = b_probs[icont,:]        
+            freqlist = list(np.round(probs*1000000).astype('int'))
+            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist ))
+            ac_model.encode_symbol(freqs,symb)
+            
+        if i_batch%1000==0:
+            print(str(i_batch) + '/' + str(n_batches) )
+            
+            
+    # probs = model.model(Temp).numpy()[0,:]
+    # freqlist = list(np.round(probs*1000000).astype('int'))
+    # # freqlist = list(probs)
+    # # prob = probs[symb]
+    # freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist ))
+    # ac_model.encode_symbol(freqs,symb)
+    
+    # if iT%10000==0:
+    #     print(str(iT) + '/' + str(nTemps) )
         
         
         

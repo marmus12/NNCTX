@@ -8,9 +8,9 @@ Created on Wed Feb 10 14:30:32 2021
 
 import numpy as np
 from pcloud_functs import pcread,pcfshow
-from scipy.io import loadmat,savemat
-import os,sys
-from coding_functs import CodingCross_with_nn_probs,Coding_with_nn_and_counts, Coding_with_AC
+from scipy.io import loadmat, savemat
+import os, sys
+from coding_functs import CodingCross_with_nn_probs, Coding_with_nn_and_counts, Coding_with_AC
 import h5py
 from enc_functs import get_temps_dests2
 from ac_functs import ac_model2
@@ -44,7 +44,7 @@ iframe = '0120'#
 filepath = PCC_Data_Dir +  sample +  '/ply/frame' +  iframe  + '.ply'
 
 
-# batch_size = 1000
+batch_size = 10000
 
 #%%####
 
@@ -96,7 +96,7 @@ m.model.load_weights(ckpt_path)
 
 bspath =  'bsfile.dat'
 enc_model = ac_model2(2,bspath,1)
-Coding_with_AC(Temps,Desds,m,enc_model)
+Coding_with_AC(Temps,Desds,m,enc_model,batch_size)
 
 enc_model.end_encoding()
 

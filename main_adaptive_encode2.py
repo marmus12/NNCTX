@@ -51,7 +51,7 @@ batch_size = 10000
 
 
 
-Location = pcread(filepath).astype('int')
+Location = pcread(filepath)
 
 #Location = Location[:,[2,1,0]]
 
@@ -76,8 +76,8 @@ Location= Location-np.min(Location,0)+16
 
 Temps,Desds = get_temps_dests2(Location,ctx_type)
 
-Temps = Temps.astype('int')
-Desds = Desds.astype('int')
+# Temps = Temps.astype('int')
+# Desds = Desds.astype('int')
 
 
 #
@@ -90,7 +90,7 @@ m.model.load_weights(ckpt_path)
 
 
 
-# CL,n_zero_probs = CodingCross_with_nn_probs(TempT,DesT,m,batch_size)
+# CL,n_zero_probs npts= CodingCross_with_nn_probs(TempT,DesT,m,batch_size)
 # assert(n_zero_probs==0)
 #CL,CL_ctx,n_zero_probs = Coding_with_nn_and_counts(TempT22,DesT22,m)
 

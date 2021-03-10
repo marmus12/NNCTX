@@ -64,9 +64,9 @@ npts = Location.shape[0]
 
 #%% 
 
-# f = h5py.File('Temps_Dests.mat','r')
-# DesTm  = np.transpose(f['DesT'][()]).astype('int')
-# TempTm= np.transpose(f['TempT'][()]).astype('int')
+f = h5py.File('Temps_Dests.mat','r')
+DesTm  = np.transpose(f['DesT'][()])
+TempTm= np.transpose(f['TempT'][()])
 #%% 
 
 
@@ -76,6 +76,8 @@ Location= Location-np.min(Location,0)+16
 
 Temps,Desds = get_temps_dests2(Location,ctx_type)
 
+
+np.sum(Temps!=TempTm)
 # Temps = Temps.astype('int')
 # Desds = Desds.astype('int')
 

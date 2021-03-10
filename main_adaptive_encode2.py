@@ -60,7 +60,7 @@ npts = Location.shape[0]
 #pcfshow(filepath)
 
 #%% 
-savemat('to_get_temps_dests.mat',{'Location':Location})
+# savemat('to_get_temps_dests.mat',{'Location':Location})
 
 #%% 
 
@@ -72,7 +72,7 @@ savemat('to_get_temps_dests.mat',{'Location':Location})
 
 Location= Location-np.min(Location,0)+16
 
-Location= np.unique(Location,axis=0)
+# Location= np.unique(Location,axis=0)
 
 Temps,Desds = get_temps_dests2(Location,ctx_type)
 

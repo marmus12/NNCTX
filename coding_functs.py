@@ -22,15 +22,16 @@ def Coding_with_AC(Temps,Desds,model,ac_model,batch_size):
         symbs = Desds[i_batch*batch_size:(i_batch+1)*batch_size]
         b_Temps = Temps[i_batch*batch_size:(i_batch+1)*batch_size,:]
         b_probs = model.model(b_Temps).numpy()        
-
+        b_freqs = np.round(b_probs*1000000).astype('int')
         for icont in range(b_probs.shape[0]):
-            symb = symbs[icont,0]
-            probs = b_probs[icont,:]        
-            freqlist = list(np.round(probs*1000000).astype('int'))
-            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist ))
+            symb = symbs[icont]
+            # probs = b_probs[icont,:]        
+            freqlist = list(b_freqs[icont,:])
+            # freqlist = list(np.round(probs*1000000).astype('int'))
+            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) #THIS HAS TO BE CHECKEDFREQTABLE
             ac_model.encode_symbol(freqs,symb)
             
-        if i_batch%1000==0:
+        if i_batch%10==0:
             print(str(i_batch) + '/' + str(n_batches) )
             
             

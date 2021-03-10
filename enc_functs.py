@@ -47,41 +47,42 @@ def OneSectOctMask2( icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopL
 
 
     wsize = np.sqrt((ctx_type+0.5)*2/5).astype(int)
-
+    b = (wsize-1)//2
+    
     [ir,ic] = np.where(np.ones((wsize,wsize)))
     
-    Tempaxa= [ic-(wsize-1)//2,ir-(wsize-1)//2]
+    Tempaxa= [ic-b,ir-b]
     # %%
     # % x = ismember(StartStopLength,[0 0 0],'rows');
     # % inds = find(diff(x));
     # % StartStopLength=StartStopLength(1:inds(2),:);
     # % StartStopLengthM=StartStopLengthM(1:inds(2),:);
-    pad = 0
+
 # %% 0. Mark the TRUE points on BWTrue
-    BWTrue = np.zeros( (SectSize[0]+2*pad, SectSize[1]+2*pad ),'int')
+    BWTrue = np.zeros( (SectSize[0], SectSize[1]),'int')
     for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):
 
-        BWTrue[BB007[iBB,2]+pad, BB007[iBB,0]+pad ] = 1
+        BWTrue[BB007[iBB,2], BB007[iBB,0]] = 1
 
 
 
 
 # %% 0.1 Mark the PREVIOUS SECTION TRUE points on BWTrue
 
-    BWTrue1 = np.zeros( (SectSize[0]+2*pad, SectSize[1]+2*pad ),'int')
+    BWTrue1 = np.zeros( (SectSize[0], SectSize[1] ),'int')
     if(icPC > 0):
         if( StartStopLength[icPC-1,1] > 0 ):
             for iBB in range(StartStopLength[icPC-1,0],StartStopLength[icPC-1,1]+1):
-                BWTrue1[ BB007[iBB,2]+pad, BB007[iBB,0]+pad ] = 1
+                BWTrue1[ BB007[iBB,2], BB007[iBB,0]] = 1
 
 
 # %% 0.2 Mark the PREVIOUS_PREVIOUS SECTION TRUE points on BWTrue
 
-    BWTrue2 = np.zeros( (SectSize[0]+2*pad, SectSize[1]+2*pad ),'int')
+    BWTrue2 = np.zeros( (SectSize[0], SectSize[1]),'int')
     if(icPC > 1):
         if( StartStopLength[icPC-2,0] > 0 ):
             for iBB in range(StartStopLength[icPC-2,0],StartStopLength[icPC-2,1]+1):
-                BWTrue2[BB007[iBB,2]+pad, BB007[iBB,0]+pad ] = 1
+                BWTrue2[BB007[iBB,2], BB007[iBB,0] ] = 1
 
 
 
@@ -89,13 +90,14 @@ def OneSectOctMask2( icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopL
         # BW_Masked np.zeros( (SectSize[0]+2*pad, SectSize[1]+2*pad ))
         # for iBB in range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
         #     BW_Masked[ BB007M[iBB,2], BB007M[iBB,0] ] = 1
-    
+    T12size = wsize**2    
+    TCsize = (T12size-1)//2
     # % Go over the possible points
     iTemp = -1
-    TempCaus = [Tempaxa[0][0:(wsize**2-1)//2],Tempaxa[1][0:(wsize**2-1)//2]]
-    disp0 = np.zeros(((wsize**2-1)//2,),'int')
-    disp1 = np.zeros(((wsize**2-1)//2,),'int')
-    for i1 in range( (wsize**2-1)//2):
+    TempCaus = [Tempaxa[0][0:TCsize],Tempaxa[1][0:TCsize]]
+    disp0 = np.zeros((TCsize,),'int')
+    disp1 = np.zeros((TCsize,),'int')
+    for i1 in range( TCsize):
         # try:
         # TCaus[i1] = BWTrue[ir+TempCaus[0][i1]+pad, ic+TempCaus[1][i1]+pad]
         # TCaus[i1] = BWTrue[ir+disp0[i1]+pad, ic+disp1[i1]+pad]
@@ -104,26 +106,31 @@ def OneSectOctMask2( icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopL
     Temp = np.zeros((StartStopLengthM[icPC,2],ctx_type),'int')
     Des = np.zeros((StartStopLengthM[icPC,2],),'int')
 
-    b = (wsize-1)//2
+    
+    
+    
     for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
         ir = BB007M[iBB,2]
         ic = BB007M[iBB,0]
 
-        Temp2 = BWTrue2[(ir-b+pad):(ir+b+1+pad),(ic-b+pad):(ic+b+1+pad)].flatten('F')
-        Temp1 = BWTrue1[(ir-b+pad):(ir+b+1+pad),(ic-b+pad):(ic+b+1+pad)].flatten('F')
+        Temp2 = BWTrue2[(ir-b):(ir+b+1),(ic-b):(ic+b+1)].flatten('F') #(2b+1)**2
+        Temp1 = BWTrue1[(ir-b):(ir+b+1),(ic-b):(ic+b+1)].flatten('F')
     
-        TCaus = np.zeros(((wsize**2-1)//2,))
-        for i1 in range( (wsize**2-1)//2):
+        TCaus = np.zeros((TCsize,))
+        for i1 in range( TCsize):
             # try:
             # TCaus[i1] = BWTrue[ir+TempCaus[0][i1]+pad, ic+TempCaus[1][i1]+pad]
-            TCaus[i1] = BWTrue[ir+disp0[i1]+pad, ic+disp1[i1]+pad]
+            TCaus[i1] = BWTrue[ir+disp0[i1], ic+disp1[i1]]
             # except:
             #     sth_wrong=1
                     
         iTemp = iTemp +1
         # Temp[iTemp, 0:ctx_type] = [Temp2(:); Temp1(:); TCaus(:)]'
-        Temp[iTemp,0:ctx_type] = np.concatenate((Temp2,Temp1,TCaus))
-        Des[iTemp] = BWTrue[ir+pad, ic+pad]
+        # Temp[iTemp,0:ctx_type] = np.concatenate((Temp2,Temp1,TCaus))
+        Temp[iTemp,0:T12size] = Temp2
+        Temp[iTemp,T12size:2*T12size] = Temp1
+        Temp[iTemp,2*T12size:ctx_type] = TCaus
+        Des[iTemp] = BWTrue[ir, ic]
         
         # temp_good = np.prod(TempTm[iTemp,0:ctx_type] == Temp[iTemp,0:ctx_type])
         
@@ -172,7 +179,7 @@ def get_temps_dests2(BB007,ctx_type):
         StartStopLength[icPC,1] = iBB-1
         StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
 
-    # %[sum(StartStopLength(:,3)) size(BB007,1)]
+ 
     ##BURADAN DEVAM!!!!!!!!!!!
     # %% Find sections in BB007M
     
@@ -196,54 +203,32 @@ def get_temps_dests2(BB007,ctx_type):
         StartStopLengthM[icPC,2] = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
 
     
-    # [sum(StartStopLengthM(:,3)) size(BB007M,1)]
+
     
     
     # %%
     nM = np.max(BB007M[:,1])
     
     Temps = np.zeros((BB007M.shape[0],ctx_type),'int')
-    Dests = np.zeros((BB007M.shape[0],1),'int')
+    Dests = np.zeros((BB007M.shape[0]),'int')
     
-    # if ctx_type == 38
-        # oct_mask_funct = @OneSectOctMask38;
 
-    # elseif any(ctx_type==4*(1:10).^2)
-    oct_mask_funct = OneSectOctMask2
-    # else
-    #     oct_mask_funct = @OneSectOctMask2;
-    # end
-    
 
     iTT = 0
     for icPC in range(nM):
         print('icPC:' + str(icPC))
-        # if(rem(icPC100) == 0), [icPC nM], end
+
         if (StartStopLengthM[icPC,2] > 0) & (StartStopLength[icPC,2] > 0) :
             
-            # Temp_shape0 = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
-            
-            
-            # TempTm = TempsTm[iTT:(iTT+Temp_shape0),0:ctx_type] 
-            # DesTm = DessTm[ iTT:(iTT+Temp_shape0),0]
-            
-            Temp, Des =  oct_mask_funct(icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopLengthM,ctx_type)
+
+            Temp, Des =  OneSectOctMask2(icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopLengthM,ctx_type)
             Temps[ iTT:(iTT+Temp.shape[0]),0:ctx_type]  = Temp
-            Dests[ iTT:(iTT+Temp.shape[0]),0]  = Des
+            Dests[ iTT:(iTT+Temp.shape[0])]  = Des
             
-            
-            # temps_good = np.prod(TempTm == Temp)
-            # dess_good = np.prod(DesTm == Des)
-            # if not(temps_good):
-            #     temps_not_good = 1
-            # if not(dess_good):
-            #     dess_not_good = 1
-                    
-                
-            
+
             
             iTT = iTT+Temp.shape[0]
-            # end
+
             
     return Temps,Dests    
 

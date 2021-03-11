@@ -9,7 +9,7 @@ Created on Wed Feb 10 22:43:25 2021
 from tensorflow.keras import backend as kb
 import numpy as np
 
-def CL_criterion(y_true,y_pred):
+def CL_criterion(y_true,y_pred): ##y_true:counts  , y_pred:probs
     
     CL=kb.sum(-y_true[:,0]*kb.log(y_pred[:,0])/kb.log(2.)-y_true[:,1]*kb.log(y_pred[:,1])/kb.log(2.))
 

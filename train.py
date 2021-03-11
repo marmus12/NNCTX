@@ -27,20 +27,20 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 #%%config
 num_epochs = 30000
-batch_size = 50000
+batch_size = 30000
 optimizer = 'adam'
 
-from models import MyModel10 as mymodel
+from models import Model10d as mymodel
 
 
 
-ctx_type=100
+ctx_type=122
 # train_data_dir = ['/home/emre/Documents/DATA/andrew_david_sarah_6_122/', 
 #                   '/home/emre/Documents/DATA/longdress_18_122/']
 # train_data_dir = '/media/emre/Data/DATA/ads6_longdress18_122/'
-# val_data_dir = '/media/emre/Data/DATA/ricardo10_1_122/'
-train_data_dir = '/media/emre/Data/DATA/ads12_longdress36_100_minco_1/'
-val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
+val_data_dir = '/media/emre/Data/DATA/a1_sol1_122/'
+train_data_dir = '/media/emre/Data/DATA/ads6_ld9_sol9_122/'
+# val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
            #     '/home/emre/Documents/DATA/soldier_1_122/']
                 
 

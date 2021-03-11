@@ -15,6 +15,10 @@ import h5py
 from enc_functs import get_temps_dests2
 from ac_functs import ac_model2
 
+import time
+
+start = time.time()
+# print("hello")
 
 
 
@@ -28,20 +32,23 @@ ctx_type = 122
 from models import MyModel10 as mymodel
 
 ckpt_dir = '/home/emre/Documents/train_logs/'
-ckpt_path = ckpt_dir+'20210222-233152/cp.ckpt'
+log_id = '20210222-233152'#'20210311-150154'
+ckpt_path = ckpt_dir+log_id+'/cp.ckpt'
 
+
+# ckpt_path = ckpt_dir+'20210225-223023/cp.ckpt'
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 
 
 # fullbody
-# sample = 'loot'#'redandblack'#'longdress'#'loot'
-# iframe = '1200'#'1550'       #'1300'     #'1200'
-# filepath = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/' +  sample +  '_vox10_' +  iframe  + '.ply'
+sample = 'loot'#'redandblack'#'longdress'#'loot'
+iframe = '1200'#'1550'       #'1300'     #'1200'
+filepath = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/' +  sample +  '_vox10_' +  iframe  + '.ply'
 
 # upperbodies
-sample = 'phil10'#
-iframe = '0120'#
-filepath = PCC_Data_Dir +  sample +  '/ply/frame' +  iframe  + '.ply'
+# sample = 'phil10'#
+# iframe = '0120'#
+# filepath = PCC_Data_Dir +  sample +  '/ply/frame' +  iframe  + '.ply'
 
 
 batch_size = 10000
@@ -110,6 +117,13 @@ bpv = CL/npts
 print('bpv: '+str(bpv))
 #bpv_ctx = CL_ctx/npts
 
+end = time.time()
+time_spent = end - start
+nmins = int(time_spent//60)
+nsecs = int(np.round(time_spent-nmins*60))
+# print('time spent:' + str(np.round(time_spent,2)))
+
+print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
 #%%
 # nbadrows = 0
 # for ir in range(TempTm.shape[0]):

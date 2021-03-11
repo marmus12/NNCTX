@@ -188,6 +188,7 @@ class MyModel10():
         self.model = keras.Sequential()
         self.model.add(keras.Input(shape=(ctx_type,)))  # contexts
         self.model.add(layers.Dense(2*ctx_type,activation="relu"))
+
         #self.model.add(layers.Dense(50,activation="relu"))
         # Finally, we add a classification layer.
         self.model.add(layers.Dense(2,activation = "softmax"))
@@ -195,6 +196,29 @@ class MyModel10():
         # Can you guess what the current output shape is at this point? Probably not.
         # Let's just print it:
         self.model.summary()            
+        
+        
+class Model10d(): #MyModel10 with a dropout layer added
+    
+    def __init__(self,ctx_type):
+        self.ctx_type=ctx_type
+        self.model = keras.Sequential()
+        self.model.add(keras.Input(shape=(ctx_type,)))  # contexts
+        self.model.add(layers.Dense(2*ctx_type,activation="relu"))
+        self.model.add(layers.Dropout(0.2))
+        #self.model.add(layers.Dense(50,activation="relu"))
+        # Finally, we add a classification layer.
+        self.model.add(layers.Dense(2,activation = "softmax"))
+
+        # Can you guess what the current output shape is at this point? Probably not.
+        # Let's just print it:
+        self.model.summary()               
+        
+        
+        
+        
+        
+        
 # class MyModel6():
     
 #     def __init__(self,ctx_type=38):

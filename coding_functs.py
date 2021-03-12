@@ -12,28 +12,43 @@ sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/
 import arithmeticcoding as arc
 
 def Coding_with_AC(Temps,Desds,model,ac_model,batch_size):
-
+    # if ENC:
     nTemps = Temps.shape[0]
     n_batches = np.ceil(nTemps/batch_size).astype('int')
     for i_batch in range(n_batches):
         
-        # symb = Desds[iT,0]
-        # Temp = Temps[iT:(iT+1),:]
         symbs = Desds[i_batch*batch_size:(i_batch+1)*batch_size]
         b_Temps = Temps[i_batch*batch_size:(i_batch+1)*batch_size,:]
         b_probs = model.model(b_Temps).numpy()        
         b_freqs = np.round(b_probs*1000000).astype('int')
         for icont in range(b_probs.shape[0]):
-            symb = symbs[icont]
-            # probs = b_probs[icont,:]        
+            symb = symbs[icont]   
             freqlist = list(b_freqs[icont,:])
-            # freqlist = list(np.round(probs*1000000).astype('int'))
             freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) #THIS HAS TO BE CHECKEDFREQTABLE
             ac_model.encode_symbol(freqs,symb)
             
         if i_batch%10==0:
             print(str(i_batch) + '/' + str(n_batches) )
-            
+    # else: ##DECODER
+    #     ctx_type = model.model.get_input_shape_at(0)[1]
+    #     wsize = np.sqrt((ctx_type+0.5)*2/5).astype(int)
+    #     b = (wsize-1)//2        
+    #     [ir,ic] = np.where(np.ones((wsize,wsize))) 
+    #     Tempaxa= [ic-b,ir-b]
+    #     T12size = wsize**2    
+    #     TCsize = (T12size-1)//2
+    #     ###
+    #     Temps = np.zeros((nTemps,ctx_type))
+    #     Temps[0,:] = np.zeros((ctx_type,),'int')
+    #     for iT in range(nTemps):
+    #         Temp = Temps[iT,:]
+    #         probs = model.model(Temp).numpy()    
+    #         freq = np.round(probs*1000000).astype('int')
+    #         freqlist = list(freq)
+    #         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+    #         symb = ac_model.decode_symbol(freqs)
+    #         ##TODO:construct the new template using the decoded symb:
+    #         Temp[0:T12]    
             
     # probs = model.model(Temp).numpy()[0,:]
     # freqlist = list(np.round(probs*1000000).astype('int'))

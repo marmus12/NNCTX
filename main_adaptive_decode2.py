@@ -32,54 +32,14 @@ ctx_type = 122
 from models import MyModel10 as mymodel
 
 ckpt_dir = '/home/emre/Documents/train_logs/'
-log_id = '20210311-195407' #'20210222-233152'#''20210311-150154' #
+log_id = '20210311-150154'
 ckpt_path = ckpt_dir+log_id+'/cp.ckpt'
+bspath =  'bsfile.dat'
 
 
-# ckpt_path = ckpt_dir+'20210225-223023/cp.ckpt'
-PCC_Data_Dir ='/media/emre/Data/DATA/'
-
-
-# fullbody
-sample = 'loot'#'redandblack'#'longdress'#'loot'
-iframe = '1200'#'1550'       #'1300'     #'1200'
-filepath = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/' +  sample +  '_vox10_' +  iframe  + '.ply'
-
-# upperbodies
-# sample = 'phil10'#
-# iframe = '0120'#
-# filepath = PCC_Data_Dir +  sample +  '/ply/frame' +  iframe  + '.ply'
 
 
 batch_size = 10000
-
-#%%####
-
-
-
-
-Location = pcread(filepath)
-
-# Location = Location[:,[2,1,0]]
-
-
-npts = Location.shape[0]
-
-
-#%% 
-# savemat('to_get_temps_dests.mat',{'Location':Location})
-# f = h5py.File('Temps_Dests.mat','r')
-# DesTm  = np.transpose(f['DesT'][()])
-# TempTm= np.transpose(f['TempT'][()])
-#%% 
-
-
-Location= Location-np.min(Location,0)+16
-
-# Location= np.unique(Location,axis=0)
-
-Temps,Desds = get_temps_dests2(Location,ctx_type)
-
 
 
 #%%
@@ -87,26 +47,19 @@ Temps,Desds = get_temps_dests2(Location,ctx_type)
 m=mymodel(ctx_type)
 m.model.load_weights(ckpt_path)
 
+ENC = 0
 
+dec_model = ac_model2(2,bspath,0)
+Coding_with_AC(0,0,m,dec_model,batch_size,ENC)
 
-#%%# simulation
-CL,n_zero_probs = CodingCross_with_nn_probs(Temps,Desds,m,batch_size)
-assert(n_zero_probs==0)
-# CL,CL_ctx,n_zero_probs = Coding_with_nn_and_counts(TempT22,DesT22,m)
-
-#%%# the real thing
-# bspath =  'bsfile.dat'
-# enc_model = ac_model2(2,bspath,1)
-# Coding_with_AC(Temps,Desds,m,enc_model,batch_size)
-
-# enc_model.end_encoding()
+dec_model.end_decoding()
 
 
 # CL = os.path.getsize(bspath)*8
-#%%
+##
 
-bpv = CL/npts
-print('bpv: '+str(bpv))
+# bpv = CL/npts
+# print('bpv: '+str(bpv))
 #bpv_ctx = CL_ctx/npts
 
 end = time.time()

@@ -12,7 +12,7 @@ import sys
 
 sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
 
-import contextlib
+# import contextlib
 import arithmeticcoding
 
 

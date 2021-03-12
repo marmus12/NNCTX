@@ -200,12 +200,12 @@ class MyModel10():
         
 class Model10d(): #MyModel10 with a dropout layer added
     
-    def __init__(self,ctx_type):
+    def __init__(self,ctx_type,do_rate=0.2):
         self.ctx_type=ctx_type
         self.model = keras.Sequential()
         self.model.add(keras.Input(shape=(ctx_type,)))  # contexts
         self.model.add(layers.Dense(2*ctx_type,activation="relu"))
-        self.model.add(layers.Dropout(0.2))
+        self.model.add(layers.Dropout(do_rate))
         #self.model.add(layers.Dense(50,activation="relu"))
         # Finally, we add a classification layer.
         self.model.add(layers.Dense(2,activation = "softmax"))

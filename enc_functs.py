@@ -6,7 +6,11 @@ Created on Mon Mar  1 15:36:29 2021
 @author: root
 """
 import numpy as np
+import sys
+from pcloud_functs import pcshow
+sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
 
+import arithmeticcoding as arc
 
 
 
@@ -43,7 +47,8 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 
 
-def OneSectOctMask2( icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopLengthM, ctx_type ):
+def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec',iBBr ='dec'):
+
 
 
     wsize = np.sqrt((ctx_type+0.5)*2/5).astype(int)
@@ -52,46 +57,12 @@ def OneSectOctMask2( icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopL
     [ir,ic] = np.where(np.ones((wsize,wsize)))
     
     Tempaxa= [ic-b,ir-b]
-    # %%
-    # % x = ismember(StartStopLength,[0 0 0],'rows');
-    # % inds = find(diff(x));
-    # % StartStopLength=StartStopLength(1:inds(2),:);
-    # % StartStopLengthM=StartStopLengthM(1:inds(2),:);
-
-# %% 0. Mark the TRUE points on BWTrue
-    BWTrue = np.zeros( (SectSize[0], SectSize[1]),'int')
-    for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):
-
-        BWTrue[BB007[iBB,2], BB007[iBB,0]] = 1
-
-
-
-
-# %% 0.1 Mark the PREVIOUS SECTION TRUE points on BWTrue
-
-    BWTrue1 = np.zeros( (SectSize[0], SectSize[1] ),'int')
-    if(icPC > 0):
-        if( StartStopLength[icPC-1,1] > 0 ):
-            for iBB in range(StartStopLength[icPC-1,0],StartStopLength[icPC-1,1]+1):
-                BWTrue1[ BB007[iBB,2], BB007[iBB,0]] = 1
-
-
-# %% 0.2 Mark the PREVIOUS_PREVIOUS SECTION TRUE points on BWTrue
-
-    BWTrue2 = np.zeros( (SectSize[0], SectSize[1]),'int')
-    if(icPC > 1):
-        if( StartStopLength[icPC-2,0] > 0 ):
-            for iBB in range(StartStopLength[icPC-2,0],StartStopLength[icPC-2,1]+1):
-                BWTrue2[BB007[iBB,2], BB007[iBB,0] ] = 1
-
-
-
-    #%% 0. Mark the Masked points from previous resolution
-        # BW_Masked np.zeros( (SectSize[0]+2*pad, SectSize[1]+2*pad ))
-        # for iBB in range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-        #     BW_Masked[ BB007M[iBB,2], BB007M[iBB,0] ] = 1
     T12size = wsize**2    
     TCsize = (T12size-1)//2
+    # %%
+
+
+
     # % Go over the possible points
     iTemp = -1
     TempCaus = [Tempaxa[0][0:TCsize],Tempaxa[1][0:TCsize]]
@@ -102,102 +73,121 @@ def OneSectOctMask2( icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopL
         disp0[i1] = TempCaus[0][i1]
         disp1[i1] = TempCaus[1][i1]
         
-    Temp = np.zeros((StartStopLengthM[icPC,2],ctx_type),'int')
-    Des = np.zeros((StartStopLengthM[icPC,2],),'int')
+    nT = StartStopLengthM[icPC,2]    
+    Temp = np.zeros((nT,ctx_type),'int')
+    Des = np.zeros((nT,),'int')
 
-    
-    
-    
+
+    iBBr_in=-1
+    Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
     for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-        ir = BB007M[iBB,2]
-        ic = BB007M[iBB,0]
+        ir = LocM[iBB,2]
+        ic = LocM[iBB,0]
 
         Temp2 = BWTrue2[(ir-b):(ir+b+1),(ic-b):(ic+b+1)].flatten('F') #(2b+1)**2
         Temp1 = BWTrue1[(ir-b):(ir+b+1),(ic-b):(ic+b+1)].flatten('F')
     
         TCaus = np.zeros((TCsize,),'int')
         for i1 in range( TCsize):
-            # try:
-            # TCaus[i1] = BWTrue[ir+TempCaus[0][i1]+pad, ic+TempCaus[1][i1]+pad]
+
             TCaus[i1] = BWTrue[ir+disp0[i1], ic+disp1[i1]]
-            # except:
-            #     sth_wrong=1
+
                     
-        iTemp = iTemp +1
-        # Temp[iTemp, 0:ctx_type] = [Temp2(:); Temp1(:); TCaus(:)]'
-        # Temp[iTemp,0:ctx_type] = np.concatenate((Temp2,Temp1,TCaus))
+        iTemp+=1
+        
         Temp[iTemp,0:T12size] = Temp2
         Temp[iTemp,T12size:2*T12size] = Temp1
         Temp[iTemp,2*T12size:ctx_type] = TCaus
-        Des[iTemp] = BWTrue[ir, ic]
+        if ENC:
+            Des[iTemp] = BWTrue[ir, ic]
+        else:
+            probs = nn_model.model(Temp[iTemp:(iTemp+1),:]).numpy()[0,:]
+            freq = np.round(probs*1000000).astype('int')
+            freqlist = list(freq)
+            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+            symb = ac_model.decode_symbol(freqs)           
+            # Des[iTemp] = symb 
+            BWTrue[ir, ic] = symb
+            if symb:
+                iBBr_in +=1
+                Locp[iBBr_in,0] = ic                 
+                Locp[iBBr_in,1] = icPC 
+                Locp[iBBr_in,2] = ir
+
+                
+                
+                
+
+    if ENC:
+        return Temp,Des
+    else:
+        return Locp[0:iBBr_in,:]
+
+def get_temps_dests2(Loc,ctx_type,ENC=True,LocM='dec',nn_model ='dec',ac_model='dec',maxesL='dec'):
+
+    if ENC:
+        # %% Pick the resolution and split to small brick
+    
+        LocM = N_BackForth(Loc)
         
-        # temp_good = np.prod(TempTm[iTemp,0:ctx_type] == Temp[iTemp,0:ctx_type])
+        Loc_ro = np.unique(Loc[:,[1,0,2]],axis=0)
+        Loc[:,[1,0,2]] = Loc_ro
+        del Loc_ro
+    
         
-        # temp_not_good =0
-        # if not(temp_good):
-        #     temp_not_good = 1
         
-
-    return Temp,Des
-
-def get_temps_dests2(BB007,ctx_type):
-
-
-    # %% Pick the resolution and split to small brick
-    BB007=BB007+8
-
-    BB007M = N_BackForth(BB007)
-    
-    BB007_ro = np.unique(BB007[:,[1,0,2]],axis=0)
-    BB007[:,[1,0,2]] = BB007_ro
-    del BB007_ro
-
+        nrPC,ncPC,maxH = np.max(Loc,0)+10
+        # ncPC = int(np.max(Loc[:,1])+10)
+        # nrPC = int(np.max(Loc[:,0])+10)
+        # maxH = int(np.max(Loc[:,2])+10)
+        SectSize = (maxH,nrPC)
+    else:
+        # aaaaa=5
+        ncPC = maxesL[1]+10
+        SectSize = (maxesL[2]+10,maxesL[0]+10)
+        #maxH,nrPC = SectSize
+        # TODO: read from file maxH,nrPC,ncPC,StartStopLength
     
     
-    nrPC,ncPC,maxH = np.max(BB007,0)+10
-    # ncPC = int(np.max(BB007[:,1])+10)
-    # nrPC = int(np.max(BB007[:,0])+10)
-    # maxH = int(np.max(BB007[:,2])+10)
-    SectSize = (maxH,nrPC)
-
+    # %% Find sections in Loc
+    StartStopLength = np.zeros((ncPC,3),dtype='int')    
+    if ENC:
+        # icPC0 = Loc[0,1] 
+        #TODO: write to file:maxH,nrPC,ncPC,icPC0
+        icPC = Loc[0,1] 
     
+        StartStopLength[icPC,0] = 0
+        for iBB in range(Loc.shape[0]):#= 1:(size(Loc,1))
+            if(Loc[iBB,1] > icPC):
+                StartStopLength[icPC,1] = iBB-1
+                StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
+                icPC = Loc[iBB,1]
+                StartStopLength[icPC,0] = iBB
     
-    # %% Find sections in BB007
-    StartStopLength = np.zeros((ncPC,3),dtype='int')
-    icPC = BB007[0,1]
-    StartStopLength[icPC,0] = 0
-    for iBB in range(BB007.shape[0]):#= 1:(size(BB007,1))
-        if(BB007[iBB,1] > icPC):
+        iBB = Loc.shape[0]
+        if(Loc[iBB-1,1] == icPC):
             StartStopLength[icPC,1] = iBB-1
             StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
-            icPC = BB007[iBB,1]
-            StartStopLength[icPC,0] = iBB
-
-    iBB = BB007.shape[0]
-    if(BB007[iBB-1,1] == icPC):
-        StartStopLength[icPC,1] = iBB-1
-        StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
 
  
     ##BURADAN DEVAM!!!!!!!!!!!
-    # %% Find sections in BB007M
+    # %% Find sections in LocM
     
-
-    BB007M_ro = np.unique(BB007M[:,[1,0,2]],axis=0)
-    BB007M[:,[1,0,2]] = BB007M_ro
-    del BB007M_ro
+    LocM_ro = np.unique(LocM[:,[1,0,2]],axis=0)
+    LocM[:,[1,0,2]] = LocM_ro
+    del LocM_ro
     StartStopLengthM = np.zeros((ncPC,3),'int')
-    icPC = BB007M[0,1]
+    icPC = LocM[0,1]
     StartStopLengthM[icPC,0] = 0
-    for iBB in range(BB007M.shape[0]):
-        if(BB007M[iBB,1] > icPC):
+    for iBB in range(LocM.shape[0]):
+        if(LocM[iBB,1] > icPC):
             StartStopLengthM[icPC,1] = iBB-1
             StartStopLengthM[icPC,2] = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
-            icPC = BB007M[iBB,1]
+            icPC = LocM[iBB,1]
             StartStopLengthM[icPC,0] = iBB
 
-    iBB = BB007M.shape[0]
-    if(BB007M[iBB-1,1] == icPC):
+    iBB = LocM.shape[0]
+    if(LocM[iBB-1,1] == icPC):
         StartStopLengthM[icPC,1] = iBB-1
         StartStopLengthM[icPC,2] = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
 
@@ -206,30 +196,82 @@ def get_temps_dests2(BB007,ctx_type):
     
     
     # %%
-    nM = np.max(BB007M[:,1])
+    nM = np.max(LocM[:,1])
+    nM7 = LocM.shape[0]
     
-    Temps = np.zeros((BB007M.shape[0],ctx_type),'int')
-    Dests = np.zeros((BB007M.shape[0]),'int')
+
     
+    if ENC:
+        Temps = np.zeros((nM7,ctx_type),'int')
+        Dests = np.zeros((nM7,),'int')
+        # nn_model = ac_model=iBBr =0
+    else:        
+        iBBr=0
+        Loc = np.zeros((5000000,3),'int')
 
 
     iTT = 0
     for icPC in range(nM):
-        print('icPC:' + str(icPC))
-
-        if (StartStopLengthM[icPC,2] > 0) & (StartStopLength[icPC,2] > 0) :
+        
+        if icPC%50==0:
+            print('icPC:' + str(icPC))
+        if ENC:
+            condition = (StartStopLengthM[icPC,2] > 0) & (StartStopLength[icPC,2] > 0)
+        else:
+            condition = (StartStopLengthM[icPC,2] > 0)  # TODO: THIS TO BE CHECKED
             
-
-            Temp, Des =  OneSectOctMask2(icPC,  BB007, BB007M, SectSize, StartStopLength, StartStopLengthM,ctx_type)
-            Temps[ iTT:(iTT+Temp.shape[0]),0:ctx_type]  = Temp
-            Dests[ iTT:(iTT+Temp.shape[0])]  = Des
+        if condition :
             
+            
+                        # %% 0. Mark the TRUE points on BWTrue
+            BWTrue = np.zeros( (SectSize[0], SectSize[1]),'int')     
+            if ENC:
+                for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):    
+                    BWTrue[Loc[iBB,2], Loc[iBB,0]] = 1
+        
+            # %% 0.1 Mark the PREVIOUS SECTION TRUE points on BWTrue
+            
+            BWTrue1 = np.zeros( (SectSize[0], SectSize[1] ),'int')
+            if(icPC > 0):
+                if( StartStopLength[icPC-1,1] > 0 ):
+                    for iBB in range(StartStopLength[icPC-1,0],StartStopLength[icPC-1,1]+1):
+                        BWTrue1[ Loc[iBB,2], Loc[iBB,0]] = 1
+            # %% 0.2 Mark the PREVIOUS_PREVIOUS SECTION TRUE points on BWTrue
+            
+            BWTrue2 = np.zeros( (SectSize[0], SectSize[1]),'int')
+            if(icPC > 1):
+                if( StartStopLength[icPC-2,0] > 0 ):
+                    for iBB in range(StartStopLength[icPC-2,0],StartStopLength[icPC-2,1]+1):
+                        BWTrue2[Loc[iBB,2], Loc[iBB,0] ] = 1
 
             
-            iTT = iTT+Temp.shape[0]
+            if ENC:
+                Temp, Des =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM,ctx_type)
+                
+                Temps[ iTT:(iTT+Temp.shape[0]),0:ctx_type]  = Temp
+                Dests[ iTT:(iTT+Temp.shape[0])]  = Des
+    
+                iTT = iTT+Temp.shape[0]
+            else:
+                 Locp =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model,iBBr)              
+                 iBBr_in = Locp.shape[0]
+                 if iBBr_in>0:
+                     
+                     Loc[iBBr:(iBBr+iBBr_in),:] = Locp
+                     # if icPC%50==0:
+                     #     pcshow(Loc)
+                     StartStopLength[icPC,2] = iBBr_in
+                     StartStopLength[icPC,0] = iBBr
 
-            
-    return Temps,Dests    
+                     iBBr+=iBBr_in
+                     StartStopLength[icPC,1] = iBBr
+                     
+                     
+
+    if ENC:        
+        return Temps,Dests    
+    else:
+        return Loc
 
 
     

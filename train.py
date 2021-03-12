@@ -27,7 +27,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 #%%config
 num_epochs = 30000
-batch_size = 30000
+batch_size = 5000
 optimizer = 'adam'
 
 from models import Model10d as mymodel
@@ -47,6 +47,8 @@ train_data_dir = '/media/emre/Data/DATA/ads6_ld9_sol9_122/'
 train_ds = ctx_dataset2(train_data_dir,ctx_type)
 
 val_ds = ctx_dataset2(val_data_dir,ctx_type)
+
+
 
 #%%
 m= mymodel(ctx_type)

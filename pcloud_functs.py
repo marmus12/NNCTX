@@ -22,8 +22,8 @@ def pcfshow(ply_path):
 
 
 def pcshow(Location):
-    pcd = open3d.PointCloud()
-    pcd.points = open3d.Vector3dVector(Location)
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.cpu.pybind.utility.Vector3dVector(Location)
     open3d.visualization.draw_geometries([pcd]) 
 
 def collect_blocks(inLoc,block_shape,max_num_blocks):               

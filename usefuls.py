@@ -99,3 +99,60 @@ def dests2probs(temps,dests):
     
     probs = uval_probs[valinvs,:]
     return probs
+
+
+
+def asvoid(arr):
+    """
+    View the array as dtype np.void (bytes)
+    This views the last axis of ND-arrays as bytes so you can perform comparisons on
+    the entire row.
+    http://stackoverflow.com/a/16840350/190597 (Jaime, 2013-05)
+    Warning: When using asvoid for comparison, note that float zeros may compare UNEQUALLY
+    >>> asvoid([-0.]) == asvoid([0.])
+    array([False], dtype=bool)
+    """
+    arr = np.ascontiguousarray(arr)
+    return arr.view(np.dtype((np.void, arr.dtype.itemsize * arr.shape[-1])))
+
+
+def in1d_index(a, b):
+    voida, voidb = map(asvoid, (a, b))
+    return np.where(np.in1d(voidb, voida))[0]    
+
+
+def compare_Locations(Loc1,GT):
+
+    uL1 = np.unique(Loc1,axis=0)
+    nL1 = uL1.shape[0]
+    uGT = np.unique(GT,axis=0)
+    nuGT = uGT.shape[0]
+    indsG = in1d_index(uL1,uGT)
+    indsL1 = in1d_index(uGT,uL1)
+    fp_inds = setdiff(list(range(nL1)),indsL1)
+    fn_inds = setdiff(list(range(nuGT)),indsG)
+    nTP = len(indsG)
+    nFN = nuGT - nTP 
+    TP = uGT[indsG,:]
+    FN = uGT[fn_inds,:]    
+    nFP = nL1-nTP
+      
+    FP = Loc1[fp_inds,:]
+    
+    print('nTP:'+ str(nTP) + ' nFP:'+ str(nFP) + ' nFN:'+ str(nFN) )
+    
+    
+    return TP,FP,FN
+    
+    
+    
+    
+    
+    
+
+
+
+# a = np.array([[4, 6],[2, 6],[5, 2]])
+# b = np.array([[1, 7],[1, 8],[2, 6],[2, 1],[2, 4],[4, 6],[4, 7],[5, 9],[5, 2],[5, 1]])
+
+# print(in1d_index(a, b))

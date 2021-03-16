@@ -47,7 +47,7 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 
 
-def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec',Location='for_debug'):
+def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug'):
 
     # global esymbs,symbs
 
@@ -100,13 +100,18 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLe
         Temp[iTemp,2*T12size:ctx_type] = TCaus
         if ENC:
             Des[iTemp] = BWTrue[iz, ix]
-        else:
-            current_Temp = Temp[iTemp,:]
+            symb = Des[iTemp]
+        # else:
+        #     current_Temp = Temp[iTemp,:]
             
-            probs = nn_model.model(Temp[iTemp:(iTemp+1),:]).numpy()[0,:]
-            freq = np.round(probs*1000000).astype('int')
-            freqlist = list(freq)
-            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        probs = nn_model.model(Temp[iTemp:(iTemp+1),:]).numpy()[0,:]       
+        freq = np.round(probs*1000000).astype('int')
+        freqlist = list(freq)
+        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        
+        if ENC:
+            ac_model.encode_symbol(freqs,symb)
+        else:
             symb = ac_model.decode_symbol(freqs)  
             globz.symbs[globz.isymb] = symb
             if globz.symbs[globz.isymb]  != globz.esymbs[globz.isymb]:
@@ -138,12 +143,12 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLe
         Locp = 0
     else:
         Locp = Locp[0:iBBr_in,:]
-        Temp = 0
+        # Temp = 0
         Des = 0
         
     return Temp,Des,Locp
 
-def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec',maxesL='dec_and_enc'):
+def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc'):
 
     gtLoc = np.copy(Loc)
         

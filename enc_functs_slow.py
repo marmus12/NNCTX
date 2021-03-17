@@ -9,7 +9,7 @@ import numpy as np
 import sys
 from pcloud_functs import pcshow
 sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
-from usefuls import in1d_index
+from usefuls import in1d_index,plt_imshow
 import arithmeticcoding as arc
 
 import globz
@@ -111,13 +111,16 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLe
         
         if ENC:
             ac_model.encode_symbol(freqs,symb)
+            globz.isymb +=1
+            if globz.isymb==56096:
+                debuggin=1
         else:
             symb = ac_model.decode_symbol(freqs)  
-            globz.symbs[globz.isymb] = symb
-            if globz.symbs[globz.isymb]  != globz.esymbs[globz.isymb]:
-                debug_tme=1
+            # globz.symbs[globz.isymb] = symb
+            # if globz.symbs[globz.isymb]  != globz.esymbs[globz.isymb]:
+            #     debug_tme=1
                 
-            globz.isymb +=1
+            # globz.isymb +=1
             
             # psymbs.append(symb)
             # Des[iTemp] = symb 
@@ -152,9 +155,9 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
 
     gtLoc = np.copy(Loc)
         
-    maxX = maxesL[0]+10        
-    maxY = maxesL[1]+10
-    maxZ = maxesL[2]+10
+    maxX = maxesL[0]  
+    maxY = maxesL[1]
+    maxZ = maxesL[2]
 
 
 

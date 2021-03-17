@@ -20,17 +20,20 @@ import time
 import globz
 start = time.time()
 # print("hello")
-
-
-
-#%%#CONFIGURATION
 globz.init()
 
 
+#%%#CONFIGURATION
+
+
+bspath =  'bsfile.dat'
 ENC = 0
 slow = 1
+ymax = 10000
 ########
 if ENC:
+    if slow:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     if not slow:
         real_encoding = 1
         batch_size = 10000
@@ -64,13 +67,13 @@ filepath = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/' +  sample +  '_vox1
 # iframe = '0120'#
 # filepath = PCC_Data_Dir +  sample +  '/ply/frame' +  iframe  + '.ply'
 
-bspath =  'bsfile.dat'
+
 
 #%%####
 
 GT = pcread(filepath).astype('int')
-GT = GT[GT[:,1]<30,:]
-Location = GT -np.min(GT ,0)+24
+GT = GT[GT[:,1]<ymax,:]
+Location = GT -np.min(GT ,0)+20
 LocM = N_BackForth(Location )
 LocM_ro = np.unique(LocM[:,[1,0,2]],axis=0)
 LocM[:,[1,0,2]] = LocM_ro
@@ -84,7 +87,7 @@ m.model.load_weights(ckpt_path)
 Loc_ro = np.unique(Location[:,[1,0,2]],axis=0)
 Location[:,[1,0,2]] = Loc_ro
 del Loc_ro
-maxesL = np.max(Location,0)
+maxesL = np.max(Location,0)+40
 
 
 if ENC:
@@ -153,17 +156,24 @@ print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
 
 #%%
 if not ENC:
-    y=30
-    xz_inds = dec_Loc[dec_Loc[:,1]==y,:][:,[0,2]]
+    y=216
+    
     dBW = np.zeros((500,500))
-    dBW[xz_inds[:,0],xz_inds[:,1]] = 2
-    plt_imshow(dBW[240:350,0:200],(20,20))
+    
+    # [250:320,0:200]
+    xz_inds = dec_Loc[dec_Loc[:,1]==y,:][:,[0,2]]
+    dBW[xz_inds[:,0],xz_inds[:,1]] = dBW[xz_inds[:,0],xz_inds[:,1]]+2
+    plt_imshow(dBW[240:320,0:200],(20,20))
     
     xz_inds2 = Location[Location[:,1]==y,:][:,[0,2]]
     # dBW = np.zeros((500,500))
     dBW[xz_inds2[:,0],xz_inds2[:,1]] = dBW[xz_inds2[:,0],xz_inds2[:,1]] +1
-    plt_imshow(dBW[240:350,0:200],(20,20))
+    plt_imshow(dBW[240:320,0:200],(20,20))
 
+    # xz_inds = FP[FP[:,1]==y,:][:,[0,2]]
+    # dBW = np.zeros((500,500))
+    # dBW[xz_inds[:,0],xz_inds[:,1]] = 2
+    # plt_imshow(dBW,(20,20))
 
 
 

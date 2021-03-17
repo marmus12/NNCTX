@@ -137,7 +137,7 @@ def compare_Locations(Loc1,GT):
     FN = uGT[fn_inds,:]    
     nFP = nL1-nTP
       
-    FP = Loc1[fp_inds,:]
+    FP = uL1[fp_inds,:]
     
     print('nTP:'+ str(nTP) + ' nFP:'+ str(nFP) + ' nFN:'+ str(nFN) )
     

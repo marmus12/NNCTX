@@ -29,22 +29,25 @@ globz.init()
 bspath =  'bsfile.dat'
 ENC = 0
 slow = 1
-ymax = 40000 #crop point cloud to a maximum y for debugging
+ymax = 51 #crop point cloud to a maximum y for debugging
 ########
 if ENC:
     if slow:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     if not slow:
-        real_encoding = 1
-        batch_size = 10000
+        # real_encoding = 1
+        globz.batch_size = 10000
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     
-    
+  
 if slow:
     from enc_functs_slow import get_temps_dests2,N_BackForth   
 else:
-    from enc_functs import get_temps_dests2,N_BackForth   
+    from enc_functs_fast import get_temps_dests2,N_BackForth   
+    
+# else:
+#     from enc_functs import get_temps_dests2,N_BackForth   
     
 
 #########
@@ -116,29 +119,12 @@ if not ENC:
     TP,FP,FN = compare_Locations(dec_Loc,Location)
 
 if ENC:
-
-    if slow:
-        ac_model.end_encoding()
-        CL = os.path.getsize(bspath)*8
-# if ENC:
-
-    if not slow:
-        #%%# simulation
-        if real_encoding:
-        
-            enc_model = ac_model2(2,bspath,1)
-            Coding_with_AC(Temps,Desds,m,enc_model,batch_size)
-            enc_model.end_encoding()
-            CL = os.path.getsize(bspath)*8
-            
-        else:
-            CL,n_zero_probs = CodingCross_with_nn_probs(Temps,Desds,m,batch_size)
-            assert(n_zero_probs==0)
-            
+    ac_model.end_encoding()
+          
     np.save('Desds.npy',Desds)   
     
-else:
-    CL = os.path.getsize(bspath)*8
+
+CL = os.path.getsize(bspath)*8
 
 
 npts = GT.shape[0]
@@ -158,20 +144,20 @@ print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
 
 
 #%%
-if not ENC:
-    y=216
+# if not ENC:
+#     y=216
     
-    dBW = np.zeros((500,500))
+#     dBW = np.zeros((500,500))
     
-    # [250:320,0:200]
-    xz_inds = dec_Loc[dec_Loc[:,1]==y,:][:,[0,2]]
-    dBW[xz_inds[:,0],xz_inds[:,1]] = dBW[xz_inds[:,0],xz_inds[:,1]]+2
-    plt_imshow(dBW[240:320,0:200],(20,20))
+#     # [250:320,0:200]
+#     xz_inds = dec_Loc[dec_Loc[:,1]==y,:][:,[0,2]]
+#     dBW[xz_inds[:,0],xz_inds[:,1]] = dBW[xz_inds[:,0],xz_inds[:,1]]+2
+#     plt_imshow(dBW[240:320,0:200],(20,20))
     
-    xz_inds2 = Location[Location[:,1]==y,:][:,[0,2]]
-    # dBW = np.zeros((500,500))
-    dBW[xz_inds2[:,0],xz_inds2[:,1]] = dBW[xz_inds2[:,0],xz_inds2[:,1]] +1
-    plt_imshow(dBW[240:320,0:200],(20,20))
+#     xz_inds2 = Location[Location[:,1]==y,:][:,[0,2]]
+#     # dBW = np.zeros((500,500))
+#     dBW[xz_inds2[:,0],xz_inds2[:,1]] = dBW[xz_inds2[:,0],xz_inds2[:,1]] +1
+#     plt_imshow(dBW[240:320,0:200],(20,20))
 
     # xz_inds = FP[FP[:,1]==y,:][:,[0,2]]
     # dBW = np.zeros((500,500))

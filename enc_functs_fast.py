@@ -152,7 +152,6 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
 
 def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc'):
 
-    # gtLoc = np.copy(Loc)
         
     maxX = maxesL[0]  
     maxY = maxesL[1]
@@ -161,14 +160,10 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
 
 
     SectSize = (maxZ,maxX)
-        #maxH,nrPC = SectSize
-        # TODO: read from file maxH,nrPC,ncPC,StartStopLength
-    
     
     # %% Find sections in Loc
     StartStopLength = np.zeros((maxY+40,3),dtype='int')    
     if ENC:
-        #TODO: write to file:maxH,nrPC,ncPC,icPC0
         icPC = globz.Loc[0,1]    
         StartStopLength[icPC,0] = 0
         for iBB in range(globz.Loc.shape[0]):#= 1:(size(Loc,1))
@@ -222,12 +217,10 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     if ENC:
         Temps = np.zeros((nM7,ctx_type),'int')
         Dests = np.zeros((nM7,),'int')
-        # nn_model = ac_model=iBBr =0
+
     else:        
         # iBBr=0
         globz.Loc = np.zeros((nM7,3),'int')
-        # symbs = []
-    # global symbs
 
 
     iTT = 0
@@ -273,28 +266,22 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     
                 iTT = iTT+Temp.shape[0]
             else:
-                 # globz.symbs = globz.symbs+symbsp
-                 # iBBr_in = Locp.shape[0]
+
                  iBBr_in = iBBr_now-iBBr_prev
                  if iBBr_in>0:
                      
-                     # Loc[iBBr:(iBBr+iBBr_in),:] = Locp
 
-                     
-                     # StartStopLength[icPC,0] = iBBr
-                     # StartStopLength[icPC,1] = iBBr+iBBr_in-1
-                     # StartStopLength[icPC,2] = iBBr_in
                       StartStopLength[icPC,0] = iBBr_prev
                       StartStopLength[icPC,1] = iBBr_now-1
                       StartStopLength[icPC,2] = iBBr_now-iBBr_prev                    
-                     # iBBr+=iBBr_in
+
                      
 
     if ENC:        
-
+        # return Temps,Dests    
         freqlist = [10,10]
         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
-        for i_s in range(32):
+        for i_s in range(16):
             ac_model.encode_symbol(freqs,0)
         
         dec_Loc = 0

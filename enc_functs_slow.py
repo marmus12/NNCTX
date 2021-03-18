@@ -23,8 +23,6 @@ def N_BackForth(sBBi): ##checked with matlab output
     quotBB = np.floor(sBBi/2).astype('int')                    #% size is (nBBx3)
     Points_parent,iC = np.unique(quotBB,return_inverse=True,axis=0)  #   % size of iC is (nBBx3)
 
-
-
     PatEl = np.array( [[0, 0, 0],
                        [1, 0, 0],
                        [0, 1, 0],
@@ -42,12 +40,12 @@ def N_BackForth(sBBi): ##checked with matlab output
         Blocki = Points_parent*2+iv3
         BlockiM = np.concatenate((BlockiM,Blocki),0) 
 
-    uBlockiM = np.unique(BlockiM,axis=0)
-    return uBlockiM
+    LocM = np.unique(BlockiM,axis=0)
+    return LocM
 
 
 
-def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug'):
+def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug'):
 
     # global esymbs,symbs
 
@@ -78,13 +76,13 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLe
     Des = np.zeros((nT,),'int')
 
 
-    iBBr_in=0
-    Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
+    # iBBr_in=0
+    # Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
     TCaus = np.zeros((TCsize,),'int')
     # psymbs = []
     for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-        iz = LocM[iBB,2]
-        ix = LocM[iBB,0]
+        iz = globz.LocM[iBB,2]
+        ix = globz.LocM[iBB,0]
 
         Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
         Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')
@@ -112,48 +110,49 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLe
         if ENC:
             ac_model.encode_symbol(freqs,symb)
             globz.isymb +=1
-            if globz.isymb==56096:
-                debuggin=1
+            # if globz.isymb==56096:
+            #     debuggin=1
         else:
             symb = ac_model.decode_symbol(freqs)  
             # globz.symbs[globz.isymb] = symb
             # if globz.symbs[globz.isymb]  != globz.esymbs[globz.isymb]:
             #     debug_tme=1
                 
-            # globz.isymb +=1
+            globz.isymb +=1
             
             # psymbs.append(symb)
             # Des[iTemp] = symb 
             BWTrue[iz, ix] = symb
             if symb:
                 
-                if len(in1d_index([[ix,icPC,iz]],Location))==0:
-                    debug_now=1
+                # if len(in1d_index([[ix,icPC,iz]],Location))==0:
+                #     debug_now=1
                 
+                globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
                 
-                Locp[iBBr_in,0] = ix                 
-                Locp[iBBr_in,1] = icPC 
-                Locp[iBBr_in,2] = iz
-                iBBr_in +=1
-                
-                
-                
+                # Locp[iBBr_in,0] = ix                 
+                # Locp[iBBr_in,1] = icPC 
+                # Locp[iBBr_in,2] = iz
+                globz.iBBr +=1
+            
+             
 
     # if ENC:
     #     return Temp,Des
     # else:
-    if ENC:  
-        Locp = 0
-    else:
-        Locp = Locp[0:iBBr_in,:]
+    # if ENC:  
+    #     # Locp = 0
+    # else:
+    if not ENC:
+        # Locp = Locp[0:iBBr_in,:]
         # Temp = 0
         Des = 0
         
-    return Temp,Des,Locp
+    return Temp,Des
 
-def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc'):
+def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc'):
 
-    gtLoc = np.copy(Loc)
+    # gtLoc = np.copy(Loc)
         
     maxX = maxesL[0]  
     maxY = maxesL[1]
@@ -167,43 +166,46 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
     
     
     # %% Find sections in Loc
-    StartStopLength = np.zeros((maxY,3),dtype='int')    
+    StartStopLength = np.zeros((maxY+40,3),dtype='int')    
     if ENC:
         #TODO: write to file:maxH,nrPC,ncPC,icPC0
-        icPC = Loc[0,1]    
+        icPC = globz.Loc[0,1]    
         StartStopLength[icPC,0] = 0
-        for iBB in range(Loc.shape[0]):#= 1:(size(Loc,1))
-            if(Loc[iBB,1] > icPC):
+        for iBB in range(globz.Loc.shape[0]):#= 1:(size(Loc,1))
+            if(globz.Loc[iBB,1] > icPC):
                 StartStopLength[icPC,1] = iBB-1
                 StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
-                icPC = Loc[iBB,1]
+                icPC = globz.Loc[iBB,1]
                 StartStopLength[icPC,0] = iBB
     
-        iBB = Loc.shape[0]
-        if(Loc[iBB-1,1] == icPC):
+        iBB = globz.Loc.shape[0]
+        if(globz.Loc[iBB-1,1] == icPC):
             StartStopLength[icPC,1] = iBB-1
             StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
 
+        ncPC = np.copy(icPC)
         SSL2 = StartStopLength[:,2]>0
-        np.save('SSL2.npy',SSL2)
-    else:        
-        SSL2 = np.load('SSL2.npy')
-    
+        np.save('SSL2.npy',{'SSL2':SSL2,'ncPC':ncPC})
+    else:    
+        
+        infodict = np.load('SSL2.npy',allow_pickle=True)[()]
+        ncPC = infodict['ncPC'][()]
+        SSL2 = infodict['SSL2']
     # %% Find sections in LocM
     
 
-    StartStopLengthM = np.zeros((maxY,3),'int')
-    icPC = LocM[0,1]
+    StartStopLengthM = np.zeros((maxY+40,3),'int')
+    icPC = globz.LocM[0,1]
     StartStopLengthM[icPC,0] = 0
-    for iBB in range(LocM.shape[0]):
-        if(LocM[iBB,1] > icPC):
+    for iBB in range(globz.LocM.shape[0]):
+        if(globz.LocM[iBB,1] > icPC):
             StartStopLengthM[icPC,1] = iBB-1
             StartStopLengthM[icPC,2] = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
-            icPC = LocM[iBB,1]
+            icPC = globz.LocM[iBB,1]
             StartStopLengthM[icPC,0] = iBB
 
-    iBB = LocM.shape[0]
-    if(LocM[iBB-1,1] == icPC):
+    iBB = globz.LocM.shape[0]
+    if(globz.LocM[iBB-1,1] == icPC):
         StartStopLengthM[icPC,1] = iBB-1
         StartStopLengthM[icPC,2] = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
 
@@ -212,8 +214,8 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
     
     
     # %%
-    nM = np.max(LocM[:,1])
-    nM7 = LocM.shape[0]
+    # nM = np.max(LocM[:,1])
+    nM7 = globz.LocM.shape[0]
     
 
     
@@ -222,14 +224,14 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
         Dests = np.zeros((nM7,),'int')
         # nn_model = ac_model=iBBr =0
     else:        
-        iBBr=0
-        Loc = np.zeros((nM7,3),'int')
+        # iBBr=0
+        globz.Loc = np.zeros((nM7,3),'int')
         # symbs = []
     # global symbs
 
 
     iTT = 0
-    for icPC in range(nM):
+    for icPC in range(ncPC+1):
         
         if icPC%50==0:
             print('icPC:' + str(icPC))
@@ -242,7 +244,7 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
             BWTrue = np.zeros( SectSize,'int')     
             if ENC:
                 for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):    
-                    BWTrue[Loc[iBB,2], Loc[iBB,0]] = 1
+                    BWTrue[globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
         
             # %% 0.1 Mark the PREVIOUS SECTION TRUE points on BWTrue
             
@@ -250,21 +252,21 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
             if(icPC > 0):
                 if( StartStopLength[icPC-1,1] > 0 ):
                     for iBB in range(StartStopLength[icPC-1,0],StartStopLength[icPC-1,1]+1):
-                        BWTrue1[ Loc[iBB,2], Loc[iBB,0]] = 1
+                        BWTrue1[ globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
             # %% 0.2 Mark the PREVIOUS_PREVIOUS SECTION TRUE points on BWTrue
             
             BWTrue2 = np.zeros( SectSize,'int')
             if(icPC > 1):
                 if( StartStopLength[icPC-2,0] > 0 ):
                     for iBB in range(StartStopLength[icPC-2,0],StartStopLength[icPC-2,1]+1):
-                        BWTrue2[Loc[iBB,2], Loc[iBB,0] ] = 1
+                        BWTrue2[globz.Loc[iBB,2], globz.Loc[iBB,0] ] = 1
 
             
-            
+            iBBr_prev = globz.iBBr
             # Temp, Des,Locp =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM,ctx_type)
-            Temp, Des,Locp  =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model,gtLoc)              
+            Temp, Des  =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model)              
 
-            
+            iBBr_now = globz.iBBr
             if ENC:   
                 Temps[ iTT:(iTT+Temp.shape[0]),0:ctx_type]  = Temp
                 Dests[ iTT:(iTT+Temp.shape[0])]  = Des
@@ -272,25 +274,32 @@ def get_temps_dests2(Loc,ctx_type,LocM,ENC=True,nn_model ='dec',ac_model='dec_an
                 iTT = iTT+Temp.shape[0]
             else:
                  # globz.symbs = globz.symbs+symbsp
-                 iBBr_in = Locp.shape[0]
+                 # iBBr_in = Locp.shape[0]
+                 iBBr_in = iBBr_now-iBBr_prev
                  if iBBr_in>0:
                      
-                     Loc[iBBr:(iBBr+iBBr_in),:] = Locp
-                     # if icPC%10==0:
-                     #     pcshow(Loc)
+                     # Loc[iBBr:(iBBr+iBBr_in),:] = Locp
+
                      
-                     StartStopLength[icPC,0] = iBBr
-                     StartStopLength[icPC,1] = iBBr+iBBr_in-1
-                     StartStopLength[icPC,2] = iBBr_in
-                     
-                     iBBr+=iBBr_in
+                     # StartStopLength[icPC,0] = iBBr
+                     # StartStopLength[icPC,1] = iBBr+iBBr_in-1
+                     # StartStopLength[icPC,2] = iBBr_in
+                      StartStopLength[icPC,0] = iBBr_prev
+                      StartStopLength[icPC,1] = iBBr_now-1
+                      StartStopLength[icPC,2] = iBBr_now-iBBr_prev                    
+                     # iBBr+=iBBr_in
                      
 
     if ENC:        
         # return Temps,Dests    
+        freqlist = [10,10]
+        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        for i_s in range(8):
+            ac_model.encode_symbol(freqs,0)
+        
         dec_Loc = 0
     else:
-        dec_Loc =  Loc[0:iBBr,:]
+        dec_Loc =  globz.Loc[0:iBBr_now,:]
         Temps = 0
         Dests  = 0
 

@@ -29,7 +29,7 @@ globz.init()
 bspath =  'bsfile.dat'
 ENC = 0
 slow = 1
-ymax = 10000
+ymax = 40000 #crop point cloud to a maximum y for debugging
 ########
 if ENC:
     if slow:
@@ -73,12 +73,13 @@ filepath = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/' +  sample +  '_vox1
 
 GT = pcread(filepath).astype('int')
 GT = GT[GT[:,1]<ymax,:]
-Location = GT -np.min(GT ,0)+20
+Location = GT -np.min(GT ,0)+32
+maxesL = np.max(Location,0)+[40,0,40]
 LocM = N_BackForth(Location )
 LocM_ro = np.unique(LocM[:,[1,0,2]],axis=0)
 LocM[:,[1,0,2]] = LocM_ro
 del LocM_ro
-
+globz.LocM = LocM
 
 m=mymodel(ctx_type)
 m.model.load_weights(ckpt_path)
@@ -86,12 +87,13 @@ m.model.load_weights(ckpt_path)
 
 Loc_ro = np.unique(Location[:,[1,0,2]],axis=0)
 Location[:,[1,0,2]] = Loc_ro
+if ENC:
+    globz.Loc = Location
 del Loc_ro
-maxesL = np.max(Location,0)+40
+
 
 
 if ENC:
-    
     # dec_model = 0
     ac_model = ac_model2(2,bspath,1)
     
@@ -104,7 +106,7 @@ else:
 
 
 
-Temps,Desds,dec_Loc= get_temps_dests2(Location,ctx_type,LocM,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL)
+Temps,Desds,dec_Loc= get_temps_dests2(ctx_type,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL)
 
 
 
@@ -118,9 +120,9 @@ if ENC:
     if slow:
         ac_model.end_encoding()
         CL = os.path.getsize(bspath)*8
-if ENC:    
-    if not slow:
+# if ENC:
 
+    if not slow:
         #%%# simulation
         if real_encoding:
         
@@ -133,14 +135,12 @@ if ENC:
             CL,n_zero_probs = CodingCross_with_nn_probs(Temps,Desds,m,batch_size)
             assert(n_zero_probs==0)
             
-        np.save('Desds.npy',Desds)   
+    np.save('Desds.npy',Desds)   
     
-    
-    
-    
-        npts = GT.shape[0]
-        bpv = CL/npts
-        print('bpv: '+str(bpv))
+
+    npts = GT.shape[0]
+    bpv = CL/npts
+    print('bpv: '+str(bpv))
 #bpv_ctx = CL_ctx/npts
 
 
@@ -175,31 +175,8 @@ if not ENC:
     # dBW[xz_inds[:,0],xz_inds[:,1]] = 2
     # plt_imshow(dBW,(20,20))
 
+#%% DECODER###############################
+############################################
 
 
 
-
-# ndsymbs = len(dsymbs)
-
-# esymbs1 = np.array(esymbs[0:ndsymbs])
-
-# dsymbs = np.array(dsymbs)
-
-
-
-
-# if __name__=="__main__":
-#     main()
-#%%
-# nbadrows = 0
-# for ir in range(TempTm.shape[0]):
-#     if not np.prod(TempT[ir,:] == TempTm[ir,:]):
-#         print(str(ir))
-#         nbadrows=nbadrows+1
-
-
-# nbadrows2 = 0
-# for ir in range(TempTm.shape[0]):
-#     if not np.prod(DesT[ir,:] == DesTm[ir,:]):
-#         print(str(ir))
-#         nbadrows2=nbadrows2+1

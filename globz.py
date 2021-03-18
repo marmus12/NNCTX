@@ -11,6 +11,7 @@ import numpy as np
 #
 
 def init():
-    global esymbs,symbs,isymb
+    global esymbs,symbs,isymb,iBBr,LocM,Loc
     symbs = -1*np.ones((1000000,),'int')
     isymb = 0
+    iBBr = 0

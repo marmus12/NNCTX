@@ -11,7 +11,8 @@ import numpy as np
 #
 
 def init():
-    global esymbs,isymb,iBBr,LocM,Loc,batch_size
+    global esymbs,isymb,iBBr,LocM,Loc,batch_size,Temps,Desds
     # symbs = -1*np.ones((1000000,),'int')
+    # iTemp = 0
     isymb = 0
     iBBr = 0

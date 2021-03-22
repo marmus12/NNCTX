@@ -62,7 +62,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
 
 
     # % Go over the possible points
-    iTemp = -1
+    # iTemp = 0
     # TempCaus = [Tempaxa[0][0:TCsize],Tempaxa[1][0:TCsize]]
     dispz = np.zeros((TCsize,),'int')
     dispx = np.zeros((TCsize,),'int')
@@ -72,14 +72,13 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
         dispx[i1] = Tempaxa[1][i1]
         
     nT = StartStopLengthM[icPC,2]    
-    Temp = np.zeros((nT,ctx_type),'int')
-    Des = np.zeros((nT,),'int')
+    # Temp = np.zeros((nT,ctx_type),'int')
+    # Des = np.zeros((nT,),'int')
 
 
-    # iBBr_in=0
-    # Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
+
     TCaus = np.zeros((TCsize,),'int')
-    # psymbs = []
+
     for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
         iz = globz.LocM[iBB,2]
         ix = globz.LocM[iBB,0]
@@ -91,64 +90,61 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
             TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
 
                     
-        iTemp+=1
+
         
-        Temp[iTemp,0:T12size] = Temp2
-        Temp[iTemp,T12size:2*T12size] = Temp1
-        Temp[iTemp,2*T12size:ctx_type] = TCaus
-        if ENC:
-            Des[iTemp] = BWTrue[iz, ix]
-            symb = Des[iTemp]
-        # else:
-        #     current_Temp = Temp[iTemp,:]
-            
-        probs = nn_model.model(Temp[iTemp:(iTemp+1),:]).numpy()[0,:]       
-        freq = np.round(probs*1000000).astype('int')
-        freqlist = list(freq)
-        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        globz.Temps[globz.iTemp,0:T12size] = Temp2
+        globz.Temps[globz.iTemp,T12size:2*T12size] = Temp1
+        globz.Temps[globz.iTemp,2*T12size:ctx_type] = TCaus
         
         if ENC:
-            ac_model.encode_symbol(freqs,symb)
-            globz.isymb +=1
-            # if globz.isymb==56096:
-            #     debuggin=1
-        else:
+            globz.Desds[globz.iTemp] = BWTrue[iz, ix]
+
+            symb = globz.Desds[globz.iTemp]
+            if symb:
+                globz.iBBr +=1
+        if not ENC:
+            probs = nn_model.model(globz.Temps[globz.iTemp:(globz.iTemp+1),:]).numpy()[0,:]       
+            freq = np.round(probs*1000000).astype('int')
+            freqlist = list(freq)
+            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
             symb = ac_model.decode_symbol(freqs)  
-            # globz.symbs[globz.isymb] = symb
-            # if globz.symbs[globz.isymb]  != globz.esymbs[globz.isymb]:
-            #     debug_tme=1
-                
+
             globz.isymb +=1
             
-            # psymbs.append(symb)
-            # Des[iTemp] = symb 
+
             BWTrue[iz, ix] = symb
             if symb:
-                
-                # if len(in1d_index([[ix,icPC,iz]],Location))==0:
-                #     debug_now=1
-                
-                globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
-                
-                # Locp[iBBr_in,0] = ix                 
-                # Locp[iBBr_in,1] = icPC 
-                # Locp[iBBr_in,2] = iz
-                globz.iBBr +=1
-            
-             
 
-    # if ENC:
-    #     return Temp,Des
-    # else:
-    # if ENC:  
-    #     # Locp = 0
-    # else:
-    if not ENC:
-        # Locp = Locp[0:iBBr_in,:]
-        # Temp = 0
-        Des = 0
+                globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
+
+                globz.iBBr +=1
         
-    return Temp,Des
+        globz.iTemp+=1        
+    if ENC:
+        # bsize = globz.batch_size) 
+        nb = np.ceil(nT/globz.batch_size).astype('int')
+        
+        for ib in range(nb):
+            bsymbs = globz.Desds[ib*globz.batch_size:(ib+1)*globz.batch_size]
+            bTemps = globz.Temps[ib*globz.batch_size:(ib+1)*globz.batch_size,:]            
+            bprobs = nn_model.model(bTemps).numpy()    
+            # bfreqs = np.round(bprobs*1000000).astype('int')
+            
+            for iT in range(len(bsymbs)):
+                freq = np.round(bprobs[iT,:]*1000000).astype('int')
+                symb = bsymbs[iT]
+                freqlist = list(freq)
+                freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist ))        
+                ac_model.encode_symbol(freqs,symb)
+                globz.isymb +=1        
+                           
+                       
+
+    # if not ENC:
+
+    #     Des = 0
+        
+    # return Temp,Des
 
 def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc'):
 
@@ -214,16 +210,16 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     
 
     
-    if ENC:
-        Temps = np.zeros((nM7,ctx_type),'int')
-        Dests = np.zeros((nM7,),'int')
+    # if ENC:
+    globz.Temps = np.zeros((nM7,ctx_type),'int')
+    globz.Desds = np.zeros((nM7,),'int')
 
-    else:        
+    if not ENC:      
         # iBBr=0
         globz.Loc = np.zeros((nM7,3),'int')
 
 
-    iTT = 0
+    # iTT = 0
     for icPC in range(ncPC+1):
         
         if icPC%50==0:
@@ -231,7 +227,6 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
 
 
         if (StartStopLengthM[icPC,2] > 0) & SSL2[icPC] :
-            
             
                         # %% 0. Mark the TRUE points on BWTrue
             BWTrue = np.zeros( SectSize,'int')     
@@ -257,38 +252,32 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             
             iBBr_prev = globz.iBBr
             # Temp, Des,Locp =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, LocM, SectSize, StartStopLengthM,ctx_type)
-            Temp, Des  =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model)              
+            OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model)              
 
             iBBr_now = globz.iBBr
-            if ENC:   
-                Temps[ iTT:(iTT+Temp.shape[0]),0:ctx_type]  = Temp
-                Dests[ iTT:(iTT+Temp.shape[0])]  = Des
-    
-                iTT = iTT+Temp.shape[0]
-            else:
+            # if ENC:   
+
+            if not ENC:
 
                  iBBr_in = iBBr_now-iBBr_prev
                  if iBBr_in>0:
-                     
 
                       StartStopLength[icPC,0] = iBBr_prev
                       StartStopLength[icPC,1] = iBBr_now-1
                       StartStopLength[icPC,2] = iBBr_now-iBBr_prev                    
 
-                     
-
     if ENC:        
         # return Temps,Dests    
         freqlist = [10,10]
         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
-        for i_s in range(16):
+        for i_s in range(32):
             ac_model.encode_symbol(freqs,0)
         
         dec_Loc = 0
     else:
         dec_Loc =  globz.Loc[0:iBBr_now,:]
-        Temps = 0
-        Dests  = 0
+    Temps = 0
+    Dests  = 0
 
     return Temps,Dests,dec_Loc
     

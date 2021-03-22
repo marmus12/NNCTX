@@ -62,7 +62,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
 
 
     # % Go over the possible points
-    iTemp = -1
+   
     # TempCaus = [Tempaxa[0][0:TCsize],Tempaxa[1][0:TCsize]]
     dispz = np.zeros((TCsize,),'int')
     dispx = np.zeros((TCsize,),'int')
@@ -73,6 +73,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
         
     nT = StartStopLengthM[icPC,2]    
     Temp = np.zeros((nT,ctx_type),'int')
+    Tprobs = np.zeros((nT,2),'float')
     Des = np.zeros((nT,),'int')
 
 
@@ -80,72 +81,85 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
     # Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
     TCaus = np.zeros((TCsize,),'int')
     # psymbs = []
+    if ENC:
+        iTemp1 = -1
+        for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
+            iz = globz.LocM[iBB,2]
+            ix = globz.LocM[iBB,0]
+    
+            Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
+            Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')
+            
+
+            
+            for i1 in range( TCsize):
+                TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
+
+            iTemp1+=1                
+            Temp[iTemp1,0:T12size] = Temp2
+            Temp[iTemp1,T12size:2*T12size] = Temp1
+            Temp[iTemp1,2*T12size:ctx_type] = TCaus
+                                    
+        nb = np.ceil(nT/globz.batch_size).astype('int')
+        for ib in range(nb):
+            bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
+            Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
+        
+                               
+ 
+    iTemp = -1
+##########2nd loop##########################################
     for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
+        iTemp+=1
         iz = globz.LocM[iBB,2]
         ix = globz.LocM[iBB,0]
-
-        Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
-        Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')
-    
-        for i1 in range( TCsize):
-            TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
-
-                    
-        iTemp+=1
         
-        Temp[iTemp,0:T12size] = Temp2
-        Temp[iTemp,T12size:2*T12size] = Temp1
-        Temp[iTemp,2*T12size:ctx_type] = TCaus
+        if not ENC:
+
+            Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
+            Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')
+    
+            for i1 in range( TCsize):
+                TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
+
+                            
+            Temp[iTemp,0:T12size] = Temp2
+            Temp[iTemp,T12size:2*T12size] = Temp1
+            Temp[iTemp,2*T12size:ctx_type] = TCaus
+            
         if ENC:
             Des[iTemp] = BWTrue[iz, ix]
             symb = Des[iTemp]
-        # else:
-        #     current_Temp = Temp[iTemp,:]
+
+            probs = Tprobs[iTemp,:]
+        else: #DECODER
+            probs = nn_model.model(Temp[iTemp:(iTemp+1),:],training=False).numpy()[0,:]       
             
-        probs = nn_model.model(Temp[iTemp:(iTemp+1),:]).numpy()[0,:]       
-        freq = np.round(probs*1000000).astype('int')
+        freq = np.ceil(probs*100).astype('int')
         freqlist = list(freq)
         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+ 
+     
         
         if ENC:
             ac_model.encode_symbol(freqs,symb)
-            globz.isymb +=1
-            # if globz.isymb==56096:
-            #     debuggin=1
-        else:
+
+
+        else:#DECODER
             symb = ac_model.decode_symbol(freqs)  
-            # globz.symbs[globz.isymb] = symb
-            # if globz.symbs[globz.isymb]  != globz.esymbs[globz.isymb]:
-            #     debug_tme=1
-                
-            globz.isymb +=1
-            
-            # psymbs.append(symb)
-            # Des[iTemp] = symb 
+
             BWTrue[iz, ix] = symb
             if symb:
                 
-                # if len(in1d_index([[ix,icPC,iz]],Location))==0:
-                #     debug_now=1
-                
                 globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
                 
-                # Locp[iBBr_in,0] = ix                 
-                # Locp[iBBr_in,1] = icPC 
-                # Locp[iBBr_in,2] = iz
+
                 globz.iBBr +=1
             
-             
-
-    # if ENC:
-    #     return Temp,Des
-    # else:
-    # if ENC:  
-    #     # Locp = 0
-    # else:
+        globz.isymb +=1      
+        #############################3
     if not ENC:
-        # Locp = Locp[0:iBBr_in,:]
-        # Temp = 0
+
         Des = 0
         
     return Temp,Des

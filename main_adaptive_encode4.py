@@ -28,23 +28,24 @@ globz.init()
 
 bspath =  'bsfile.dat'
 ENC = 0
-slow = 1
-ymax = 51 #crop point cloud to a maximum y for debugging
+slow = 0
+ymax = 1200 #crop point cloud to a maximum y for debugging
 ########
 if ENC:
     if slow:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     if not slow:
         # real_encoding = 1
-        globz.batch_size = 10000
+        # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        globz.batch_size = 2 
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     
-  
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  
 if slow:
     from enc_functs_slow import get_temps_dests2,N_BackForth   
 else:
-    from enc_functs_fast import get_temps_dests2,N_BackForth   
+    from enc_functs_fast2 import get_temps_dests2,N_BackForth   
     
 # else:
 #     from enc_functs import get_temps_dests2,N_BackForth   
@@ -77,7 +78,7 @@ filepath = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/' +  sample +  '_vox1
 GT = pcread(filepath).astype('int')
 GT = GT[GT[:,1]<ymax,:]
 Location = GT -np.min(GT ,0)+32
-maxesL = np.max(Location,0)+[40,0,40]
+maxesL = np.max(Location,0)+[80,0,80]
 LocM = N_BackForth(Location )
 LocM_ro = np.unique(LocM[:,[1,0,2]],axis=0)
 LocM[:,[1,0,2]] = LocM_ro
@@ -96,16 +97,11 @@ del Loc_ro
 
 
 
-if ENC:
-    # dec_model = 0
-    ac_model = ac_model2(2,bspath,1)
-    
-else:
+if not ENC:
     globz.esymbs = np.load('Desds.npy')
 
-    # maxesL = np.max(Location,0)
     #%%
-    ac_model = ac_model2(2,bspath,0)
+ac_model = ac_model2(2,bspath,ENC)
 
 
 
@@ -120,8 +116,8 @@ if not ENC:
 
 if ENC:
     ac_model.end_encoding()
-          
-    np.save('Desds.npy',Desds)   
+    # if not slow:
+    #     np.save('Desds.npy',globz.Desds)   
     
 
 CL = os.path.getsize(bspath)*8
@@ -140,6 +136,17 @@ nsecs = int(np.round(time_spent-nmins*60))
 # print('time spent:' + str(np.round(time_spent,2)))
 
 print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
+
+##
+#%%
+if not ENC:
+    for ip in range(dec_Loc.shape[0]):
+        
+        if not np.prod(dec_Loc[ip,:]==Location[ip,:]):
+            
+            first_bad_ip = ip
+            break
+        
 
 
 

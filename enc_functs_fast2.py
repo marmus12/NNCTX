@@ -45,7 +45,7 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 
 
-def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug'):
+def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None):
 
     # global esymbs,symbs
 
@@ -103,10 +103,12 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
         nb = np.ceil(nT/globz.batch_size).astype('int')
         for ib in range(nb):
             bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
-            Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
-        
+            # Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
+            Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = sess.run(nn_model.output,feed_dict={nn_model.input:bTemp})
                                
- 
+    # if not ENC:
+    #     bTemp = np.zeros((globz.batch_size,ctx_type),'int')
+        
     iTemp = -1
 ##########2nd loop##########################################
     for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
@@ -133,10 +135,16 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
 
             probs = Tprobs[iTemp,:]
         else: #DECODER
-            probs = nn_model.model(Temp[iTemp:(iTemp+1),:],training=False).numpy()[0,:]       
-            
-        freq = np.ceil(probs*100).astype('int')
+            # bTemp = Temp[iTemp:(iTemp+globz.batch_size),:]
+            # bTemp[0,:] = Temp[iTemp,:]
+            # probs = nn_model.model(bTemp,training=False).numpy()[0,:]       
+            # probs = nn_model.model(Temp[iTemp:(iTemp+1),:],training=False).numpy()[0,:]       
+            probs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp[iTemp:(iTemp+1),:]})[0,:]
+        freq = np.round(probs*(2**10)).astype('int')+1
         freqlist = list(freq)
+        # if freqlist!=[1006,18]:
+        #     fhegs=5
+            
         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
  
      
@@ -164,7 +172,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,
         
     return Temp,Des
 
-def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc'):
+def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None):
 
     # gtLoc = np.copy(Loc)
         
@@ -278,7 +286,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             
             iBBr_prev = globz.iBBr
          
-            Temp, Des  =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model)              
+            Temp, Des  =  OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model,sess=sess)              
 
             iBBr_now = globz.iBBr
             if ENC:   

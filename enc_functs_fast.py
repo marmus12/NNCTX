@@ -21,7 +21,7 @@ def N_BackForth(sBBi): ##checked with matlab output
 # %% input: sBBi, the sorted PC, by unique
 
     quotBB = np.floor(sBBi/2).astype('int')                    #% size is (nBBx3)
-    Points_parent,iC = np.unique(quotBB,return_inverse=True,axis=0)  #   % size of iC is (nBBx3)
+    Points_parent = np.unique(quotBB,axis=0)  #   % size of iC is (nBBx3)
 
     PatEl = np.array( [[0, 0, 0],
                        [1, 0, 0],

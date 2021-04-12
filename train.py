@@ -27,10 +27,10 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 #%%config
 num_epochs = 30000
-batch_size = 5000
+batch_size = 30000
 optimizer = 'adam'
 
-from models import Model10d as mymodel
+from models import MyModel10 as mymodel
 
 
 

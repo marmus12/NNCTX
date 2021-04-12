@@ -10,6 +10,14 @@ Created on Thu Feb  4 16:41:19 2021
 import numpy as np
 import open3d 
 
+
+def lowerResolution(Loc):
+    
+    return np.unique(np.floor(Loc/2).astype('int'),axis=0)
+
+
+
+
 def pcread(ply_path):
     pcd = open3d.io.read_point_cloud(ply_path )
     GT = np.asarray(pcd.points,'int16')   

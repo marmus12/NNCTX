@@ -37,7 +37,7 @@ ctx_type = 122
 from models import MyModel10
 
 ckpt_dir = '/home/emre/Documents/train_logs/'
-log_id = '20210222-233152' #'20210222-233152'#''20210311-150154' #
+log_id = '20210401-145646' #'20210222-233152' #'20210222-233152'#''20210311-150154' #
 ckpt_path = ckpt_dir+log_id+'/cp.ckpt'
 
 

@@ -31,26 +31,18 @@ debug = 0
 bspath =  'bsfile.dat'
 ENC = 0
 slow = 0
-ymax = 100 #crop point cloud to a maximum y for debugging
+ymax = 2090 #crop point cloud to a maximum y for debugging
 ########
-# if ENC:
-    # if slow:
-    #     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 if not slow:
     # real_encoding = 1
     # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     globz.batch_size = 10000
-# else:
-#     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  
+
 if slow:
     from enc_functs_slow import get_temps_dests2,N_BackForth   
 else:
     from enc_functs_fast2 import get_temps_dests2,N_BackForth   
-    
-# else:
-#     from enc_functs import get_temps_dests2,N_BackForth   
     
 
 #########
@@ -58,8 +50,8 @@ ctx_type = 122
 from models import MyModel10, intModel10, intModel10_2, tfint10_2
 
 ckpt_dir = '/home/emre/Documents/train_logs/'
-log_id = '20210222-233152' #'20210222-233152'#''20210311-150154' #
-ckpt_path = ckpt_dir+log_id+'/cp.ckpt'
+log_id = '20210401-145646'#'20210311-150154' #'20210225-223023' #'20210222-233152' #'20210222-233152'#''20210311-150154' #
+# ckpt_path = ckpt_dir+log_id+'/cp.ckpt'
 
 # if ENC:
 PCC_Data_Dir ='/media/emre/Data/DATA/'
@@ -160,7 +152,7 @@ ac_model = ac_model2(2,bspath,ENC)
 
 
 
-Temps,Desds,dec_Loc= get_temps_dests2(ctx_type,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL,sess=sess)
+dec_Loc= get_temps_dests2(ctx_type,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL,sess=sess)
 
 
 
@@ -206,40 +198,40 @@ if debug and not ENC:
 
 
 #%%
-if debug and ENC:
-    nT = Temps.shape[0]
+# if debug and ENC:
+#     nT = Temps.shape[0]
     
-    batch_size = 1
-    Tprobs1 = np.zeros((nT,2))
-    nb = np.ceil(nT/batch_size).astype('int')
-    for ib in range(nb):
-        bTemp = Temps[ib*batch_size:(ib+1)*batch_size,:]
-        Tprobs1[ib*batch_size:(ib+1)*batch_size,:] = m.model(bTemp,training=False).numpy()  
+#     batch_size = 1
+#     Tprobs1 = np.zeros((nT,2))
+#     nb = np.ceil(nT/batch_size).astype('int')
+#     for ib in range(nb):
+#         bTemp = Temps[ib*batch_size:(ib+1)*batch_size,:]
+#         Tprobs1[ib*batch_size:(ib+1)*batch_size,:] = m.model(bTemp,training=False).numpy()  
     
-    batch_size = 30
-    Tprobs = np.zeros((nT,2))
-    nb = np.ceil(nT/batch_size).astype('int')
-    for ib in range(nb):
-        bTemp = Temps[ib*batch_size:(ib+1)*batch_size,:]
-        Tprobs[ib*batch_size:(ib+1)*batch_size,:] = m.model(bTemp,training=False).numpy()  
-    
-    
+#     batch_size = 30
+#     Tprobs = np.zeros((nT,2))
+#     nb = np.ceil(nT/batch_size).astype('int')
+#     for ib in range(nb):
+#         bTemp = Temps[ib*batch_size:(ib+1)*batch_size,:]
+#         Tprobs[ib*batch_size:(ib+1)*batch_size,:] = m.model(bTemp,training=False).numpy()  
     
     
     
-    np.prod(Tprobs==Tprobs1)
     
-    # np.sum(np.ceil(Tprobs*100).astype(int)==np.ceil(Tprobs1*100).astype(int))
-    inequ = np.round(Tprobs*10).astype(int)!=np.round(Tprobs1*10).astype(int)
-    np.prod(inequ)
-    np.sum(inequ)
-    ieinds = np.where(inequ)
     
-    Tprobs[ieinds[0][0]]
-    Tprobs1[ieinds[0][0]]
+#     np.prod(Tprobs==Tprobs1)
     
-    np.round(Tprobs[ieinds[0][0]]*10).astype(int)
-    np.round(Tprobs1[ieinds[0][0]]*10).astype(int)
+#     # np.sum(np.ceil(Tprobs*100).astype(int)==np.ceil(Tprobs1*100).astype(int))
+#     inequ = np.round(Tprobs*10).astype(int)!=np.round(Tprobs1*10).astype(int)
+#     np.prod(inequ)
+#     np.sum(inequ)
+#     ieinds = np.where(inequ)
+    
+#     Tprobs[ieinds[0][0]]
+#     Tprobs1[ieinds[0][0]]
+    
+#     np.round(Tprobs[ieinds[0][0]]*10).astype(int)
+#     np.round(Tprobs1[ieinds[0][0]]*10).astype(int)
 #%%
 # if not ENC:
 #     y=216

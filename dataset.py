@@ -11,6 +11,7 @@ import numpy as np
 from glob import glob
 import h5py
 from tensorflow import keras 
+from pcloud_functs import pcread
 
 class ctx_dataset:
     
@@ -101,15 +102,101 @@ class ctx_dataset2:
         
         self.ctx_type = ctx_type
         self.data_dir = data_dir
-        
-        f = h5py.File(self.data_dir+'ctxs.mat')        
-        self.ctxs = np.transpose(f['all_ctxs'][()])
-        f = h5py.File(self.data_dir+'counts.mat')        
-        self.counts = np.transpose(f['all_counts'][()])
-        
+        try:
+            f = h5py.File(self.data_dir+'ctxs.mat')        
+            self.ctxs = np.transpose(f['all_ctxs'][()])
+            f = h5py.File(self.data_dir+'counts.mat')        
+            self.counts = np.transpose(f['all_counts'][()])
+        except:
+            data = np.load(self.data_dir+'data.npy',allow_pickle=True)
+            self.ctxs = data[()]['ctxs']
+            self.counts = data[()]['counts']
+            
         assert(self.ctxs.shape[0]==self.counts.shape[0])
         assert(self.ctxs.shape[1] == ctx_type)
         self.n_ctxs = self.counts.shape[0]
+        
+        
+
+class pc_ds:
+    
+    def __init__(self,sample,root_dir = '/media/emre/Data/DATA/'):
+        
+        self.sample = sample
+        self.root_dir = root_dir 
+        self.sample_dir = root_dir + sample +'/'
+        
+        if sample in ['loot','redandblack','longdress','soldier','thaidancer','boxer']:
+            self.body = 'full'
+            self.ply_dir = self.sample_dir +  sample +  '/Ply/'
+        else:
+            self.body = 'upper'
+            self.ply_dir = self.sample_dir + '/ply/'
+        
+        self.filepaths = glob(self.ply_dir+'*.ply')
+        self.nframes = len(self.filepaths)
+        
+        if '10' in sample:
+            self.bitdepth= 10
+        elif sample in ['loot','redandblack','longdress','soldier']:
+            self.bitdepth = 10
+        elif '9' in sample:
+            self.bitdepth = 9
+
+        try:    
+            self.nptss = np.load(self.sample_dir + 'nptss.npy')
+        except:
+            self.nptss = np.zeros((self.nframes,),'int')
+            print('collecting nptss..')
+            for iif,filepath in enumerate(self.filepaths):
+                if iif%50==0:
+                    print(str(iif)+'/'+str(self.nframes))
+       
+                self.nptss[iif] = pcread(filepath).shape[0]
+    
+            assert(np.prod(self.nptss>0))
+    
+            np.save(self.sample_dir+'nptss.npy',self.nptss) 
+    
+    def read_frame(self,ifile=None,iframe=None):
+        
+        if ifile!=None and iframe!=None:
+            raise ValueError("only one of iframe or ifile should be fed")
+        
+        
+        if ifile is not(None):
+            fpath = self.filepaths[ifile]
+            print('file read:'+fpath)
+            return pcread(fpath) 
+            
+        elif iframe is not(None):
+            if type(iframe)!=str:
+                iframe = str(iframe)
+                
+            if self.body=='full':
+                fpath = self.ply_dir + self.sample + '_vox'+str(self.bitdepth)+'_'+iframe+'.ply'
+            else:
+                fpath = self.ply_dir + 'frame'+iframe+'.ply'
+            
+            print('file read:'+fpath)
+            return pcread(fpath) 
+                
+        else:
+            raise ValueError("either iframe or ifile should be fed")
+        
+    def ifile2iframe(self,ifile):
+        if self.body=='full':
+            return self.filepaths[ifile].split('vox10_')[1].split('.ply')[0]
+        else:
+            return self.filepaths[ifile].split('frame')[1].split('.ply')[0]  
+        
+    def iframe2ifile(self,iframe):
+        for ifile,filepath in enumerate(self.filepaths):
+            if iframe in filepath:
+                return ifile
+
+
+
         
         
         

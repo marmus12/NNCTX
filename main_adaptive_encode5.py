@@ -27,29 +27,26 @@ from datetime import datetime
 import inspect
 from shutil import copyfile
 #%%#CONFIGURATION
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-# if ENC:
+
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 output_root = '/media/emre/Data/euvip_tests/'
 
 # fullbody
 sample = 'loot'#'redandblack'#'longdress'#'loot'
-# body='full'
-# filepaths = glob(PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/*.ply')[0:1]#[::-1]
-ds = pc_ds(sample)
-filepaths = ds.filepaths
-#########
-#upperbodies
-# sample = 'ricardo9'#
-# body='upper'
-# filepaths = glob(PCC_Data_Dir + sample +  '/ply/*.ply')[::-1]
 
-level = 7
+ds = pc_ds(sample)
+filepaths = ds.filepaths[0:1]
+#########
+
+
+
+level = 9
 ori_level = ds.bitdepth #BE CAREFUL!!!
 ENC = 1
 if not ENC:
-    bs_dir = '/media/emre/Data/euvip_tests/loot10_20210410-230004/bss/'
+    bs_dir = '/media/emre/Data/euvip_tests/loot10_20210415-135604/bss/'
     
 # slow = 0
 # ymax = 10000 #crop point cloud to a maximum y for debugging
@@ -59,14 +56,14 @@ if ds.body=='upper':
 # if not slow:
     # real_encoding = 1
     # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-globz.batch_size = 100#0000
+globz.batch_size = 10000#0000
 from enc_functs_fast3 import get_temps_dests2,N_BackForth   
 
 #########
 ctx_type = 100
 
 ckpt_dir = '/home/emre/Documents/train_logs/'
-log_id = '20210409-225535'
+log_id = '20210409-225535'#'20210415-222905'#
 #################################################################
 
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")

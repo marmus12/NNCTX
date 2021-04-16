@@ -13,7 +13,7 @@ import random
 from datetime import datetime
 from tensorflow.keras.layers import Conv2D
 from scipy.io import loadmat
-from usefuls import setdiff,find_common_rows,find_diff_rows,find_diff_rows_with_ind
+from usefuls import setdiff,find_common_rows,find_diff_rows,find_diff_rows_with_ind,plt_imshow
 #import plyfile
 from pcloud_functs import collect_blocks, collect_counts,ctxbits2block
 from train_utils import CL_criterion
@@ -40,8 +40,8 @@ ctx_type=100
 # train_data_dir = ['/home/emre/Documents/DATA/andrew_david_sarah_6_122/', 
 #                   '/home/emre/Documents/DATA/longdress_18_122/']
 # train_data_dir = '/media/emre/Data/DATA/ads6_longdress18_122/'
-val_data_dir = '/media/emre/Data/DATA/a1_sol1_100/'
-train_data_dir = '/media/emre/Data/DATA/ads6_ld9_sol9_100/'
+val_data_dir = '/media/emre/Data/DATA/F4_a1_s1_100/'
+train_data_dir = '/media/emre/Data/DATA/F4_ads6_ls9_100/'
 # val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
            #     '/home/emre/Documents/DATA/soldier_1_122/']
                 
@@ -74,16 +74,6 @@ copyfile(curr_file,logdir + curr_date + "__" + curr_file.split("/")[-1])
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
 
-
-
-#%%
-
-
-#%%
-#loss_fn = tf.keras.losses.BinaryCrossentropy(reduction=tf.keras.losses.Reduction.SUM)
-# loss_fn = CL_criterion
-
-# CL=kb.sum(-y_true[:,0]*kb.log(y_pred[:,0])/kb.log(2.)-y_true[:,1]*kb.log(y_pred[:,1])/kb.log(2.))
 
 
 

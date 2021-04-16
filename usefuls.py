@@ -8,9 +8,77 @@ Created on Mon Feb  8 12:57:06 2021
 
 import numpy as np
 from matplotlib import pyplot as plt
+from array import array
+from dec2bin import dec2bin
 # def unique_rows(data):
 #     uniq = np.unique(data.view(data.dtype.descr * data.shape[1]))
 #     return uniq.view(data.dtype).reshape(-1, data.shape[1])
+
+
+
+
+def write_bits(inbits,fpath):
+    lenin = len(inbits)
+    nbytes = np.ceil(lenin/8).astype(int)
+    
+    
+    bin_array = array("B")
+    bits = inbits + "0" * (nbytes*8 - lenin)  # Align bits to 32, i.e. add "0" to tail
+    for index in range(0, nbytes*8, 8):
+        byte = bits[index:index + 8][::-1]
+        bin_array.append(int(byte, 2))
+    
+    with open(fpath, "wb") as f:
+        f.write(bytes(bin_array))
+#######################################
+def read_bits(fpath) :
+    with open(fpath, "rb") as f:
+        rbyte_array = f.read()
+      
+    rbits=''
+    # t=100-1
+    for rbyte in rbyte_array[0:(len(rbyte_array)-1)]:
+         red_bits = dec2bin(rbyte)
+         nbits = len(red_bits)
+         red_bits='0'*(8-nbits)+red_bits
+         
+         for irb in range(8):
+             rbits = rbits+str(red_bits[7-irb])
+             # t-=1
+    rbyte = rbyte_array[-1]
+    red_bits = dec2bin(rbyte)
+    for irb in range(len(red_bits)):
+        rbits = rbits+str(red_bits[(len(red_bits)-1)-irb]) 
+        
+    return rbits
+
+
+def write_ints(ints,nintbits,fpath):
+    
+    inbits = ''
+    for i,inte in enumerate(ints):
+        intbin = dec2bin(inte)
+        
+        inbits=inbits+'0'*(nintbits[i]-len(intbin)) +intbin
+    
+    inbits = inbits+'1'
+
+    write_bits(inbits,fpath)
+
+def read_ints(nintbits,fpath):
+    ints = np.zeros(shape=(len(nintbits),),dtype=int)
+    bits = read_bits(fpath)
+    t=0
+    for ii,nintbit in enumerate(nintbits):
+        intbits = bits[t:(t+nintbit)]
+        theint=0
+        for k,intbit in enumerate(intbits):
+            theint+=2**(nintbit-1-k)*int(intbit)
+        ints[ii] = theint
+        t+=nintbit
+    return ints
+            
+        
 
 
 def plt_imshow(im,figsize=(12,12)):

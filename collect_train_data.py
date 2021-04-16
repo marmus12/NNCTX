@@ -14,21 +14,22 @@ import os
 from shutil import copyfile
 import inspect
 import numpy as np
-from enc_functs_fast3 import get_uctxs_counts2
+
 globz.init()
 #%%
+from enc_functs_fast42 import get_uctxs_counts2
 root_dir = '/media/emre/Data/DATA/'
 #%%
+samples = ['andrew10','david10','sarah10','longdress','soldier']
 
-samples = ['soldier','andrew10']
-
-nfr_per_samples = [1,1]
+nfr_per_samples = [6,6,6,9,9]
 
 
-do_try_catch = 0
+
 temp_type = 4*5*5
 # min_fr_count=1
-out_dir = root_dir+'a1_sol1_'+str(temp_type)+'/'
+out_dir = root_dir+'F4_ads6_ls9_'+str(temp_type)+'/'
+
 #%%
 if not os.path.exists(out_dir):
     os.mkdir(out_dir)
@@ -59,7 +60,7 @@ for i_sample,sample in enumerate(samples):
         ply_paths.append( ds.filepaths[i_fr])
         GT = ds.read_frame(i_fr)
 
-        ctxs,counts = get_uctxs_counts2(GT,temp_type,do_try_catch)
+        ctxs,counts = get_uctxs_counts2(GT,temp_type)
 
         
         if type(ctxs)!=int:
@@ -96,7 +97,7 @@ for i_sample,sample in enumerate(samples):
             all_ctxs = np.copy(u_ctxs)
             all_counts = np.copy(u_counts)
             del u_ctxs, u_counts, uinvs
-            np.save(out_dir+'data.npy',{'ctxs':all_ctxs,'counts':all_counts})
+            np.save(out_dir+'data.npy',{'ctxs':all_ctxs,'counts':all_counts,'ply_paths':ply_paths})
             
 
 

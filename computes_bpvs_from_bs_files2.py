@@ -15,10 +15,14 @@ from dataset import pc_ds
 #%% 
 sample='loot'#COMPLETE SET
 
-euviptest_dirs = {10:'/media/emre/Data/euvip_tests/loot10_20210410-234245/',
-                  9:'/media/emre/Data/euvip_tests/loot9_20210412-121850/',
-                  8:'/media/emre/Data/euvip_tests/loot8_20210412-160809/',
-                  7:'/media/emre/Data/euvip_tests/loot7_20210412-182626/'}
+# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/loot10_20210410-234245/',
+#                   9:'/media/emre/Data/euvip_tests/loot9_20210412-121850/',
+#                   8:'/media/emre/Data/euvip_tests/loot8_20210412-160809/',
+#                   7:'/media/emre/Data/euvip_tests/loot7_20210412-182626/',
+#                   6:'/media/emre/Data/euvip_tests/loot6_20210412-184940/',
+#                   5:'/media/emre/Data/euvip_tests/loot5_20210412-190325/',
+#                   4:'/media/emre/Data/euvip_tests/loot4_20210412-191304/',
+#                   3:'/media/emre/Data/euvip_tests/loot3_20210412-192127/'}
 #%%
 # sample='ricardo10' #COMPLETE SET
 # body= 'upper'
@@ -41,16 +45,11 @@ euviptest_dirs = {10:'/media/emre/Data/euvip_tests/loot10_20210410-234245/',
 #                   4:'/media/emre/Data/euvip_tests/ricardo94_20210405-202221/',
 #                   3:'/media/emre/Data/euvip_tests/ricardo93_20210405-202844/'}
 #%%
-# sample='phil10' #COMPLETE SET
-# body= 'upper'
-# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/phil1010_20210403-165424/',
-#                   9:'/media/emre/Data/euvip_tests/phil109_20210404-130711/',
-#                   8:'/media/emre/Data/euvip_tests/phil108_20210404-171317/',
-#                   7:'/media/emre/Data/euvip_tests/phil107_20210404-182604/',
-#                   6:'/media/emre/Data/euvip_tests/phil106_20210404-195925/',
-#                   5:'/media/emre/Data/euvip_tests/phil105_20210404-203258/',
-#                   4:'/media/emre/Data/euvip_tests/phil104_20210404-205150/',
-#                   3:'/media/emre/Data/euvip_tests/phil103_20210404-210524/'}
+sample='phil10' #COMPLETE SET
+body= 'upper'
+euviptest_dirs = {10:'/media/emre/Data/euvip_tests/phil1010_20210413-152631/',
+                  9:'/media/emre/Data/euvip_tests/phil109_20210414-145022/',
+                  8:'/media/emre/Data/euvip_tests/phil108_20210414-211952/'}
 #%%
 # sample='phil9' #COMPLETE SET
 # body= 'upper'
@@ -64,7 +63,14 @@ euviptest_dirs = {10:'/media/emre/Data/euvip_tests/loot10_20210410-234245/',
 #%%
 # sample='redandblack'
 
-# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/redandblack10_20210411-131805/'}
+# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/redandblack10_20210411-131805/',
+#                   9:'/media/emre/Data/euvip_tests/redandblack9_20210412-194417/',
+#                   8:'/media/emre/Data/euvip_tests/redandblack8_20210412-233614/',
+#                   7:'/media/emre/Data/euvip_tests/redandblack7_20210413-071209/',
+#                   6:'/media/emre/Data/euvip_tests/redandblack6_20210413-100421/',
+#                   5:'/media/emre/Data/euvip_tests/redandblack5_20210413-101831/',
+#                   4:'/media/emre/Data/euvip_tests/redandblack4_20210413-110121/',
+#                   3:'/media/emre/Data/euvip_tests/redandblack3_20210413-111453/'}
 
 
 

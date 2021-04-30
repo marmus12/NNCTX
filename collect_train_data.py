@@ -20,15 +20,15 @@ globz.init()
 from enc_functs_fast42 import get_uctxs_counts2
 root_dir = '/media/emre/Data/DATA/'
 #%%
-samples = ['andrew10','david10','sarah10','longdress','soldier']
+samples = ['andrew10','soldier']
 
-nfr_per_samples = [6,6,6,9,9]
+nfr_per_samples = [1,1]
 
 
 
 temp_type = 4*5*5
 # min_fr_count=1
-out_dir = root_dir+'F4_ads6_ls9_'+str(temp_type)+'/'
+out_dir = root_dir+'F4_a1_s1_'+str(temp_type)+'/'
 
 #%%
 if not os.path.exists(out_dir):

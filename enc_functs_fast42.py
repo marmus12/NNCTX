@@ -70,20 +70,20 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
      
         iTemp1+=1   
         iTin = 0
-        for zi in range(iz-b,iz+b+1):
-            for xi in range(ix-b,ix+b+1):
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
                 Temp[iTemp1,iTin] = BWTrue2[zi,xi]
                 iTin+=1 
-        for zi in range(iz-b,iz+b+1):
-            for xi in range(ix-b,ix+b+1):
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
                 Temp[iTemp1,iTin] = BWTrue1[zi,xi]
                 iTin+=1  
-        for zi in range(iz-b,iz+b+1):
-            for xi in range(ix-b,ix+b+1):
-                Temp[iTemp1,iTin] = BWTrueM[zi,xi]
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
+                Temp[iTemp1,iTin] = BWTrueM[zi,xi]## TODO CHECK IF THIS IS ALIGNED WITH enc_fast_4
                 iTin+=1                  
-        for zi in range(iz-b,iz+b+1):
-            for xi in range(ix-b,ix+b+1):
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
                 Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
                 iTin+=1                      
 
@@ -337,15 +337,7 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch=0):
             counts[ic[i1],symb]=counts[ic[i1],symb]+1
     
     
-    
-    # except:
-        
-    #     if not do_try_catch:
-    #         raise(Exception('this one didnt work'))
-        
-    #     uctxs=0
-    #     counts = 0
-        
+
         return uctxs,counts
     
     

@@ -11,67 +11,31 @@ from pcloud_functs import pcread
 import os
 import numpy as np
 from dataset import pc_ds
+from shutil import copyfile
+import inspect
+from datetime import datetime
+root_test_dir ='/media/emre/Data/euvip_tests/'
 #LEVELS 1,2 ARE ALREADY ACCOUNTED FOR with 64 bits
 #%% 
-sample='loot'#COMPLETE SET
+sample='phil10'#COMPLETE SET
+euviptest_dirs = {10:root_test_dir+'phil1010_20210413-152631/',
+                  9:root_test_dir+'phil109_20210414-145022/',
+                  8:root_test_dir+'phil108_20210414-211952/',
+                  7:root_test_dir+'phil107_20210414-230103/',
+                  6:root_test_dir+'phil106_20210430-125546/',
+                  5:root_test_dir+'phil105_20210430-131922/'}
 
-# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/loot10_20210410-234245/',
-#                   9:'/media/emre/Data/euvip_tests/loot9_20210412-121850/',
-#                   8:'/media/emre/Data/euvip_tests/loot8_20210412-160809/',
-#                   7:'/media/emre/Data/euvip_tests/loot7_20210412-182626/',
-#                   6:'/media/emre/Data/euvip_tests/loot6_20210412-184940/',
-#                   5:'/media/emre/Data/euvip_tests/loot5_20210412-190325/',
-#                   4:'/media/emre/Data/euvip_tests/loot4_20210412-191304/',
-#                   3:'/media/emre/Data/euvip_tests/loot3_20210412-192127/'}
-#%%
-# sample='ricardo10' #COMPLETE SET
-# body= 'upper'
-# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/ricardo1010_20210403-002005/',
-#                   9:'/media/emre/Data/euvip_tests/ricardo109_20210403-120151/',
-#                   8:'/media/emre/Data/euvip_tests/ricardo108_20210403-141238/',
-#                   7:'/media/emre/Data/euvip_tests/ricardo107_20210403-144830/',
-#                   6:'/media/emre/Data/euvip_tests/ricardo106_20210403-153103/',
-#                   5:'/media/emre/Data/euvip_tests/ricardo105_20210403-154047/',
-#                   4:'/media/emre/Data/euvip_tests/ricardo104_20210403-154851/',
-#                   3:'/media/emre/Data/euvip_tests/ricardo103_20210405-151511/'}
-#%%
-# sample='ricardo9' #COMPLETE SET
-# body= 'upper'
-# euviptest_dirs = {9:'/media/emre/Data/euvip_tests/ricardo99_20210405-154444/',
-#                   8:'/media/emre/Data/euvip_tests/ricardo98_20210405-184754/',
-#                   7:'/media/emre/Data/euvip_tests/ricardo97_20210405-192550/',
-#                   6:'/media/emre/Data/euvip_tests/ricardo96_20210405-200614/',
-#                   5:'/media/emre/Data/euvip_tests/ricardo95_20210405-201508/',
-#                   4:'/media/emre/Data/euvip_tests/ricardo94_20210405-202221/',
-#                   3:'/media/emre/Data/euvip_tests/ricardo93_20210405-202844/'}
-#%%
-sample='phil10' #COMPLETE SET
-body= 'upper'
-euviptest_dirs = {10:'/media/emre/Data/euvip_tests/phil1010_20210413-152631/',
-                  9:'/media/emre/Data/euvip_tests/phil109_20210414-145022/',
-                  8:'/media/emre/Data/euvip_tests/phil108_20210414-211952/'}
-#%%
-# sample='phil9' #COMPLETE SET
-# body= 'upper'
-# euviptest_dirs = {9:'/media/emre/Data/euvip_tests/phil99_20210405-013531/',
-#                   8:'/media/emre/Data/euvip_tests/phil98_20210405-124549/',
-#                   7:'/media/emre/Data/euvip_tests/phil97_20210405-141300/',
-#                   6:'/media/emre/Data/euvip_tests/phil96_20210405-144357/',
-#                   5:'/media/emre/Data/euvip_tests/phil95_20210405-145253/',
-#                   4:'/media/emre/Data/euvip_tests/phil94_20210405-145834/',
-#                   3:'/media/emre/Data/euvip_tests/phil93_20210405-150256/'}
-#%%
-# sample='redandblack'
 
-# euviptest_dirs = {10:'/media/emre/Data/euvip_tests/redandblack10_20210411-131805/',
-#                   9:'/media/emre/Data/euvip_tests/redandblack9_20210412-194417/',
-#                   8:'/media/emre/Data/euvip_tests/redandblack8_20210412-233614/',
-#                   7:'/media/emre/Data/euvip_tests/redandblack7_20210413-071209/',
-#                   6:'/media/emre/Data/euvip_tests/redandblack6_20210413-100421/',
-#                   5:'/media/emre/Data/euvip_tests/redandblack5_20210413-101831/',
-#                   4:'/media/emre/Data/euvip_tests/redandblack4_20210413-110121/',
-#                   3:'/media/emre/Data/euvip_tests/redandblack3_20210413-111453/'}
-
+last_run_level = 5
+output_root = '/media/emre/Data/bpv_results/'
+curr_date = datetime.now().strftime("%Y%m%d-%H%M")
+output_dir = output_root + sample + '_' + curr_date + '/'
+if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
+else:
+    print('overwriting the already existing output_dir:'+output_dir)
+curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
+copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])    
 
 
 ds = pc_ds(sample)
@@ -79,7 +43,7 @@ body=ds.body
 
 levels = list(euviptest_dirs.keys())
 
-bss_dir = euviptest_dirs[np.min(levels)] +'bss/'
+bss_dir = euviptest_dirs[last_run_level] +'bss/'
 bs_paths = glob(bss_dir+'*.dat')
 
 iframes =[]
@@ -139,7 +103,7 @@ print('min bpv:'+str(np.min(bpvs)))
 print('max bpv:'+str(np.max(bpvs)))
 print('ave bpv over '+str(len(iframes)) +' frames:'+str(ave_bpv))
 
-np.save('/media/emre/Data/euvip_tests/'+sample+'.npy',{'CLs':CLs,'bpvs':bpvs,'fpaths':filepaths,'ave_bpv':ave_bpv,'test_dirs':euviptest_dirs})
+np.save(output_dir+sample+'.npy',{'CLs':CLs,'bpvs':bpvs,'bs_paths':bs_paths,'ave_bpv':ave_bpv,'test_dirs':euviptest_dirs})
 
 
 

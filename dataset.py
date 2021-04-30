@@ -97,17 +97,17 @@ class ctx_dataset:
 class ctx_dataset2:
     
     
-    def __init__(self,data_dir='/home/emre/Documents/DATA/ads6_longdress18_122/',ctx_type=122):
+    def __init__(self,data_dir='/home/emre/Documents/DATA/ads6_longdress18_122/',ctx_type=122,from_npy=True):
         
         
         self.ctx_type = ctx_type
         self.data_dir = data_dir
-        try:
+        if not(from_npy):
             f = h5py.File(self.data_dir+'ctxs.mat')        
             self.ctxs = np.transpose(f['all_ctxs'][()])
             f = h5py.File(self.data_dir+'counts.mat')        
             self.counts = np.transpose(f['all_counts'][()])
-        except:
+        else:
             data = np.load(self.data_dir+'data.npy',allow_pickle=True)
             self.ctxs = data[()]['ctxs']
             self.counts = data[()]['counts']

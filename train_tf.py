@@ -28,18 +28,19 @@ assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 #%%config
+# restore = True
+# if restore:
+    
 num_epochs = 30000
-batch_size = 200000
-
-
+batch_size = 10000
+learning_rate = 0.001
+lambda_wr = 0
 from models import tfModel10 as mymodel
 
 
-
+minprob= 0.0001#0.01
 ctx_type=100
-# train_data_dir = ['/home/emre/Documents/DATA/andrew_david_sarah_6_122/', 
-#                   '/home/emre/Documents/DATA/longdress_18_122/']
-# train_data_dir = '/media/emre/Data/DATA/ads6_longdress18_122/'
+#%%
 val_data_dir = '/media/emre/Data/DATA/F4_a1_s1_100/'
 train_data_dir = '/media/emre/Data/DATA/F4_ads6_ls9_100/'
 # val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
@@ -56,7 +57,22 @@ val_ds = ctx_dataset2(val_data_dir,ctx_type)
 mdl= mymodel(ctx_type)
 
 
+#%% DISCARD THE MOST FREQUENT CONTEXT FROM TRAINING SET; SINCE COUNTS ARE SO HIGH
+# n_discard =1
+# tot_counts = np.sum(train_ds.counts,1)
+# disc_ind = np.argmax(tot_counts)
+# ###
+vtot_counts = np.sum(val_ds.counts,1)
+vdisc_ind = np.argmax(vtot_counts)
+#%%##REFINE TRAINING SET BY COUNT RATIOS##################################
+count_ratio_th = 0.2
+ratios= np.min(train_ds.counts,1)/np.max(train_ds.counts,1)
+train_inds = np.where(ratios<count_ratio_th)[0]
+
+
+
 #%%
+
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
 logdir = '/home/emre/Documents/train_logs/' + curr_date + '/'
 
@@ -80,10 +96,15 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 tfcounts = tf1.placeholder(dtype='float',shape = [None,2])
 
 
-loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0])+tfcounts[:,1]*tf1.log(mdl.output[:,1]))
+# loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0])+tfcounts[:,1]*tf1.log(mdl.output[:,1]))
+cl_loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0]+minprob) + tfcounts[:,1]*tf1.log(mdl.output[:,1]+minprob))/tf1.reduce_sum(tfcounts[:,1])
+
+wr_loss = lambda_wr*(tf1.reduce_mean(mdl.w1)+tf1.reduce_mean(mdl.b1)+tf1.reduce_mean(mdl.w2)+tf1.reduce_mean(mdl.b2))
+
+loss = cl_loss + wr_loss
 
 
-opti = tf1.train.AdamOptimizer()
+opti = tf1.train.AdamOptimizer(learning_rate=learning_rate)
 
 train_op = opti.minimize(loss)
 
@@ -108,31 +129,41 @@ sess.run(tf1.global_variables_initializer())
 
 sess.run([train_writer.init(),val_writer.init(), step.initializer])
 
-train_inds = list(range(train_ds.n_ctxs))
-val_inds = range(val_ds.n_ctxs)
+#train_inds = list(range(disc_ind))+list(range(disc_ind+1,train_ds.n_ctxs))#list(range(train_ds.n_ctxs))
+val_inds = list(range(vdisc_ind))+list(range(vdisc_ind+1,val_ds.n_ctxs))#range(val_ds.n_ctxs)
 
 best_val_loss = 100000000
+prev_tr_loss = 10000000
+
+num_batches = len(train_inds)//batch_size
+done=0
 for epoch in range(num_epochs):
     
     print('epoch:' + str(epoch))
+    
+   # if(epoch%10==0):
     np.random.shuffle(train_inds)
 
-    num_batches = np.ceil(train_ds.n_ctxs/batch_size).astype('int')
-    
-    
+
     for ibatch in range(num_batches):
     
         batch_inds = train_inds[ibatch*batch_size:(ibatch+1)*batch_size]
         trctxs = train_ds.ctxs[batch_inds,:]
         trcounts = train_ds.counts[batch_inds,:]
-        
+        # tr_loss= sess.run(loss,feed_dict = {mdl.input:trctxs,tfcounts:trcounts})  
+        # if tr_loss<4*prev_tr_loss:
         sess.run([train_op],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})
-    
-    tr_loss,_= sess.run([loss,tr_loss_summ],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})   
+    #         prev_tr_loss = tr_loss
+    #     else:
+    #         done=1
+    #         break
+    # if done==1:
+    #     break
+    tr_loss = sess.run([loss,tr_loss_summ],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})   
     sess.run(step_update)
     sess.run(train_writer_flush)
     print('tr_loss:'+str(tr_loss))
-    
+
     #%%# VALIDATION:
     batch_inds = random.sample(val_inds,batch_size)
     vctxs = val_ds.ctxs[batch_inds,:]

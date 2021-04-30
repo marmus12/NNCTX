@@ -347,7 +347,24 @@ class tfint10_3():
 
         self.output = tf1.nn.softmax((tf1.matmul(self.o2,self.w2)+self.b2)/(C2*(2**M)))       
         
+class tfModel11():
+    
+    def __init__(self,ctx_type):
+        tf1.disable_eager_execution()
+        xinitializer = keras.initializers.GlorotUniform()
+        zinitializer = keras.initializers.zeros()
+        self.input = tf1.placeholder(dtype='float',shape=[None,ctx_type])
+        self.n_latent = ctx_type//2
+        self.w1 = tf1.Variable(xinitializer(shape=(ctx_type,self.n_latent))) 
+        self.b1 = tf1.Variable(zinitializer(shape=(self.n_latent,))) 
+        self.o1 = tf1.nn.relu((tf1.matmul(self.input,self.w1)+self.b1))
 
+        self.w2 = tf1.Variable(xinitializer(shape=(self.n_latent,2))) 
+        self.b2 = tf1.Variable(zinitializer(shape=(2,))) 
+        self.output = tf1.nn.softmax(tf1.matmul(self.o1,self.w2)+self.b2)        
+        
+        
+  
 # o1 = (double(T)*iw1+ib1)/C1;
 
 # ro1 = o1.*(o1>0);

@@ -11,11 +11,48 @@ import numpy as np
 import open3d 
 
 
+
+def vol2inds(vol):
+    return np.stack(np.where(vol==1),1)
+
+def inds2vol(Loc,volshape):
+    vol = np.zeros(volshape,'bool')
+    for ipt in range(Loc.shape[0]):
+        vol[Loc[ipt,0],Loc[ipt,1],Loc[ipt,2]] = 1
+    return vol
+
 def lowerResolution(Loc):
     
     return np.unique(np.floor(Loc/2).astype('int'),axis=0)
 
+def dilate_Loc(lrGT): 
 
+# %% Move from current resolution one level down and then one up
+# %% In the UP step enforce at each cube all 8 possible patterns  
+# %% input: sBBi, the sorted PC, by unique
+
+    # quotBB = np.floor(sBBi/2).astype('int')                    #% size is (nBBx3)
+    # Points_parent,iC = np.unique(quotBB,return_inverse=True,axis=0)  #   % size of iC is (nBBx3)
+
+    PatEl = np.array( [[0, 0, 0],
+                       [1, 0, 0],
+                       [0, 1, 0],
+                       [1, 1, 0],
+                       [0, 0, 1],
+                       [1, 0, 1],
+                       [0, 1, 1],
+                       [1, 1, 1]])
+                       
+
+    
+    BlockiM = np.zeros([0,3],'int')
+    for iloc in range(8):    # % size(PatEl,1) = 8
+        iv3 = PatEl[iloc,:]
+        Blocki = lrGT*2+iv3
+        BlockiM = np.concatenate((BlockiM,Blocki),0) 
+
+    LocM = np.unique(BlockiM,axis=0)
+    return LocM
 
 
 def pcread(ply_path):

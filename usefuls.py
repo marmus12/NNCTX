@@ -14,8 +14,27 @@ from dec2bin import dec2bin
 #     uniq = np.unique(data.view(data.dtype.descr * data.shape[1]))
 #     return uniq.view(data.dtype).reshape(-1, data.shape[1])
 
+import os
 
-
+def get_dir_size(directory):
+    """Returns the `directory` size in bytes."""
+    total = 0
+    try:
+        # print("[+] Getting the size of", directory)
+        for entry in os.scandir(directory):
+            if entry.is_file():
+                # if it's a file, use stat() function
+                total += entry.stat().st_size
+            elif entry.is_dir():
+                # if it's a directory, recursively call this function
+                total += get_dir_size(entry.path)
+    except NotADirectoryError:
+        # if `directory` isn't a directory, get the file size then
+        return os.path.getsize(directory)*8
+    except PermissionError:
+        # if for whatever reason we can't open the folder, return 0
+        return 0
+    return total*8
 
 def write_bits(inbits,fpath):
     lenin = len(inbits)

@@ -94,22 +94,33 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
             iz = globz.LocM[iBB,2]
             ix = globz.LocM[iBB,0]
     
-            Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
-            Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')            
-            Temp1M = BWTrue1M[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')        
+   
 
-            
+            iTemp1+=1   
+            iTin = 0
+            for xi in range(ix-b,ix+b+1):            
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp1,iTin] = BWTrue2[zi,xi]
+                    iTin+=1 
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp1,iTin] = BWTrue1[zi,xi]
+                    iTin+=1  
+    
+    
             for i1 in range( TCsize):
                 TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
             for i1 in range( TCsize+1):    
                 TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]
-                
-            iTemp1+=1                
-            Temp[iTemp1,0:T12size] = Temp2
-            Temp[iTemp1,T12size:2*T12size] = Temp1
+    
             Temp[iTemp1,2*T12size:(2*T12size+TCsize)] = TCaus
             Temp[iTemp1,(2*T12size+TCsize):3*T12size] = TNCaus
-            Temp[iTemp1,3*T12size:ctx_type] = Temp1M
+            # Temp[iTemp1,3*T12size:ctx_type] = Temp1M
+            iTin = 3*T12size
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
+                    iTin+=1     
 
         if not for_train:               
             nb = np.ceil(nT/globz.batch_size).astype('int')
@@ -131,20 +142,31 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
         
         if not ENC:
 
-            Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
-            Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')
-            Temp1M = BWTrue1M[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')  
-            
+            iTin = 0
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp,iTin] = BWTrue2[zi,xi]
+                    iTin+=1 
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp,iTin] = BWTrue1[zi,xi]
+                    iTin+=1  
+    
+    
             for i1 in range( TCsize):
                 TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
             for i1 in range( TCsize+1):    
-                TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]    
-                            
-            Temp[iTemp,0:T12size] = Temp2
-            Temp[iTemp,T12size:2*T12size] = Temp1
+                TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]
+    
             Temp[iTemp,2*T12size:(2*T12size+TCsize)] = TCaus
             Temp[iTemp,(2*T12size+TCsize):3*T12size] = TNCaus
-            Temp[iTemp,3*T12size:ctx_type] = Temp1M 
+            # Temp[iTemp1,3*T12size:ctx_type] = Temp1M
+            iTin = 3*T12size
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp,iTin] = BWTrue1M[zi,xi]
+                    iTin+=1              
+
             
         if ENC or for_train:
             Des[iTemp] = BWTrue[iz, ix]
@@ -388,7 +410,16 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch):
             symb = int(DesT[i1])
             counts[ic[i1],symb]=counts[ic[i1],symb]+1
     
-
+    
+    
+    # except:
+        
+    #     if not do_try_catch:
+    #         raise(Exception('this one didnt work'))
+        
+    #     uctxs=0
+    #     counts = 0
+        
         return uctxs,counts
     
     

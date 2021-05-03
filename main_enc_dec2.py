@@ -30,7 +30,7 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # fullbody
-sample = 'ricardo10'#'redandblack'#'longdress'#'loot'
+sample = 'loot'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 # filepaths = ds.filepaths#[0:30]
@@ -78,12 +78,12 @@ nn_model = tfint10_3(ckpt_path)
  
 
 GT = pcread(filepath).astype('int')
-##LOWER RES INPUT FOR DEBUGGING:
+#%%#LOWER RES INPUT FOR DEBUGGING:
 # nlevel_down = 0
 # ori_level = ori_level-nlevel_down
 # for il in range(nlevel_down):
 #     GT = lowerResolution(GT)
-####################################    
+#%%###################################    
 # bs_dir = '/media/emre/Data/main_enc_dec/redandblack_20210430-184615/bss/'
 _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
 dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ori_level)

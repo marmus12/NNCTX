@@ -138,7 +138,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
     if for_train:
         return Temp.astype('bool'),Des
 
-def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,for_train=False,bs_dir=None,save_SSL=True,level=0):
+def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,for_train=False,bs_dir=None,save_SSL=True,level=0,ori_level=0,dSSLs=0):
 
     # gtLoc = np.copy(Loc)
         
@@ -168,35 +168,35 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             StartStopLength[icPC,1] = iBB-1
             StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
 
-        ncPC = icPC
+        # ncPC = icPC
         SSL2 = StartStopLength[:,2]>0
         # np.save(bs_dir+'SSL'+str(level)+'.npy',{'SSL':SSL2,'ncPC':ncPC})
-        ssbits = dec2bin2(ncPC-16,level+2)
-        for ssbit in SSL2:
-            ssbits=ssbits+str(int(ssbit))
         
-        # ssbits = ssbits + dec2bin2(ncPC,level+10)
-        
-        ssbits = ssbits + '1'
-        
-        write_bits(ssbits,bs_dir+'SSL'+str(level)+'.dat')
+        if level==ori_level:
+
+            ssbits = ''#dec2bin2(ncPC-16,level+2)
+            for ssbit in SSL2:
+                ssbits=ssbits+str(int(ssbit))
+            
+            # ssbits = ssbits + dec2bin2(ncPC,level+10)
+            
+            ssbits = ssbits + '1'
+            
+            write_bits(ssbits,bs_dir+'SSL.dat')
     else:    
         
-        ssbits = read_bits(bs_dir+'SSL'+str(level)+'.dat')    
-        ncPC = bin2dec2(ssbits[0:(level+2)])+16
-        SSL2 = np.zeros((maxY+10,),dtype='bool')    
-        for ib,ssbit in enumerate(ssbits[(level+2):(-1)]):
-            SSL2[ib] = bool(int(ssbit))
+        # ssbits = read_bits(bs_dir+'SSL'+str(level)+'.dat')    
+        # ncPC = bin2dec2(ssbits[0:(level+2)])+16
+        # SSL2 = np.zeros((maxY+10,),dtype='bool')    
+        # for ib,ssbit in enumerate(ssbits[(level+2):(-1)]):
+        #     SSL2[ib] = bool(int(ssbit))
         
-        # infodict = np.load(bs_dir+'SSL'+str(level)+'.npy',allow_pickle=True)[()]
-        # ncPCr = infodict['ncPC'][()]
-        # SSL2r = infodict['SSL']
+        SSL2 = dSSLs[level,:]
         
-        # if(ncPCr!=ncPC):
-        #     fhwefs=5
-        # if(not(np.prod(SSL2r==SSL2))):
-        #     fhwefs=6 
         
+        
+    ncPC = np.max(np.where(SSL2)[0])
+
     # %% Find sections in LocM
     
 
@@ -388,6 +388,8 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
         for ibit in range(64):
             lowest_str = lowest_str+str(lowest_bs[ibit])
         write_bits(lowest_str+'1',bs_dir+'lowest.dat')
+        
+        dSSLs = 0
     if not ENC:
         lowest_str = read_bits(bs_dir+'lowest.dat')[0:64]
         lowest_bs = np.zeros([64,],int)
@@ -403,6 +405,27 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
         for il in range(ori_level-2):
             lrmm = lowerResolution(lrmm)
             lrmms[ori_level-il-1,:] = lrmm
+            
+            
+       ##get dssls     
+        dSSLs  = np.zeros((ori_level+1,4000),int)
+        ssbits = read_bits(bs_dir+'SSL.dat')[:-1]#[(ori_level+2):-1]
+        # dSSL = ssbits    
+        for ib,bit in enumerate(ssbits):
+            dSSLs[ori_level,ib] = int(bit) 
+            
+        # dncPCs = np.zeros((ori_level+1),int)
+        # dncPCs[ori_level] = np.max(np.where(dSSLs[ori_level])[0])
+        for level in range(ori_level,3,-1):
+            # lrmms[level][1]%2
+            add = lrmms[level][1]%2#1-np.where(SSLs[level])[0][-1]%2
+            inds = lowerResolution(np.where(dSSLs[level])[0]+add-32)+32
+            dSSLs[level-1,inds] = 1
+            # dncPCs[level-1] = np.max(np.where(dSSLs[level-1])[0])
+            # print(level)        
+                     
+            
+            
             
     start = time.time()
     
@@ -438,7 +461,7 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
             globz.Loc = Location
             del Loc_ro
 
-        dec_Loc= get_temps_dests2(nn_model.ctx_type,ENC,nn_model = nn_model,ac_model=ac_model,maxesL = maxesL,sess=sess,bs_dir=bs_dir,save_SSL=True,level=level)
+        dec_Loc= get_temps_dests2(nn_model.ctx_type,ENC,nn_model = nn_model,ac_model=ac_model,maxesL = maxesL,sess=sess,bs_dir=bs_dir,save_SSL=True,level=level,ori_level=ori_level,dSSLs=dSSLs)
     
         # if not ENC and debug_dec:
         

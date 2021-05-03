@@ -23,10 +23,12 @@ euviptest_dirs = {10:root_test_dir+'phil1010_20210413-152631/',
                   8:root_test_dir+'phil108_20210414-211952/',
                   7:root_test_dir+'phil107_20210414-230103/',
                   6:root_test_dir+'phil106_20210430-125546/',
-                  5:root_test_dir+'phil105_20210430-131922/'}
+                  5:root_test_dir+'phil105_20210430-131922/',
+                  4:root_test_dir+'phil104_20210430-195614/',
+                  3:root_test_dir+'phil103_20210404-210524/'}
 
 
-last_run_level = 5
+last_run_level = 3
 output_root = '/media/emre/Data/bpv_results/'
 curr_date = datetime.now().strftime("%Y%m%d-%H%M")
 output_dir = output_root + sample + '_' + curr_date + '/'

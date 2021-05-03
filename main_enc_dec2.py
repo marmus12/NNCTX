@@ -7,16 +7,16 @@ Created on Wed Feb 10 14:30:32 2021
 """
 
 import numpy as np
-from pcloud_functs import pcread,pcfshow,pcshow,lowerResolution
-from scipy.io import loadmat, savemat
+from pcloud_functs import pcread,pcfshow,pcshow,lowerResolution,inds2vol,vol2inds,dilate_Loc
+#from scipy.io import loadmat, savemat
 import os, sys
-from coding_functs import CodingCross_with_nn_probs, Coding_with_AC
+#from coding_functs import CodingCross_with_nn_probs, Coding_with_AC
 import h5py
 
 import tensorflow.compat.v1 as tf1
 from models import tfint10_2,tfint10_3
 from ac_functs import ac_model2
-from usefuls import compare_Locations,plt_imshow
+from usefuls import compare_Locations,plt_imshow,write_bits,read_bits,write_ints,read_ints,get_dir_size
 import time
 from glob import glob
 import globz
@@ -30,131 +30,97 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # fullbody
-sample = 'phil10'#'redandblack'#'longdress'#'loot'
+sample = 'ricardo10'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
-filepaths = ds.filepaths#[0:1]
+# filepaths = ds.filepaths#[0:30]
+
 #########
-level = 3
+# level = 8
 ori_level = ds.bitdepth
-ENC = 1
-if not ENC: 
-    bs_dir = '/media/emre/Data/euvip_tests/loot10_20210427-154851/bss/'
+# ENC = 0
+# debug_dec = 0
+# if ENC or debug_dec:
+ifile=0
+filepath = ds.filepaths[ifile]
+# if not ENC:
+#     bs_dir = '/media/emre/Data/main_enc_dec/ricardo10_20210430-145919/bss/'
+# if not ENC: 
+#     bs_dir = '/media/emre/Data/euvip_tests/loot10_20210427-154851/bss/'
     
 # ymax = 10000 #crop point cloud to a maximum y for debugging
 ########
 globz.batch_size = 10000#0000
-from enc_functs_fast3 import get_temps_dests2,N_BackForth   
+from enc_functs_fast42d import ENCODE_DECODE
 #########
 ctx_type = 100
 
-log_id = '20210409-225535'#'20210409-225535'#'20210415-222905'#slow model: '20210409-225535'
+log_id = '20210421-180239'#'20210409-225535'#'20210415-222905'#
 
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
-m = tfint10_3(ckpt_path)
+
 #################################################################
 PCC_Data_Dir ='/media/emre/Data/DATA/'
-output_root = '/media/emre/Data/euvip_tests/'
+output_root = '/media/emre/Data/main_enc_dec/'
 if ds.body=='upper':
     assert(str(ori_level) in sample)
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
-if ENC:
-    output_dir = output_root + sample + str(level) +'_' + curr_date + '/'
-    os.mkdir(output_dir)
-    curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
-    copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])    
- 
-    bs_dir = output_dir + 'bss/'
-    os.mkdir(bs_dir)
+# if ENC:
+output_dir = output_root + sample +'_' + curr_date + '/'
+os.mkdir(output_dir)
+curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
+copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])     
+bs_dir = output_dir + 'bss/'
+os.mkdir(bs_dir)
 ##################################################################
-print(bs_dir)
+# print(bs_dir)
+nn_model = tfint10_3(ckpt_path)
+ 
 
-sess = tf1.Session()
+GT = pcread(filepath).astype('int')
+##LOWER RES INPUT FOR DEBUGGING:
+# nlevel_down = 0
+# ori_level = ori_level-nlevel_down
+# for il in range(nlevel_down):
+#     GT = lowerResolution(GT)
+####################################    
+# bs_dir = '/media/emre/Data/main_enc_dec/redandblack_20210430-184615/bss/'
+_,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
+dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ori_level)
 
-sess.run(tf1.global_variables_initializer())
+TP,FP,FN=compare_Locations(dec_GT,GT)
 
-nfiles = len(filepaths)
-time_spents = np.zeros((nfiles,),'int')
-CLs = np.zeros((nfiles,),'int')
-bpvs = np.zeros((nfiles,),'float')
-for ifile,filepath in enumerate(filepaths):
-    print(str(ifile) + '/' + str(nfiles))
-    start = time.time()
-    #%%####
-    if ds.body=='full':
-        iframe = filepaths[ifile].split('vox10_')[1].split('.ply')[0]
-    else:
-        iframe = filepaths[ifile].split('frame')[1].split('.ply')[0]
-    bspath =  bs_dir +'bs_'+iframe+'.dat'
-    ac_model = ac_model2(2,bspath,ENC)
-    GT = pcread(filepath).astype('int')
-    
-    
-    for il in range(ori_level-level):
-        GT = lowerResolution(GT)
-    
-    
-    Location = GT -np.min(GT ,0)+32
-    maxesL = np.max(Location,0)+[80,0,80]
-    LocM = N_BackForth(Location )
-    LocM_ro = np.unique(LocM[:,[1,0,2]],axis=0)
-    LocM[:,[1,0,2]] = LocM_ro
-    del LocM_ro
-    globz.LocM = LocM
-    
-    Loc_ro = np.unique(Location[:,[1,0,2]],axis=0)
-    Location[:,[1,0,2]] = Loc_ro
-    if ENC:
-        globz.Loc = Location
-    del Loc_ro
+CL = get_dir_size(bs_dir)
 
 
-    
-    dec_Loc= get_temps_dests2(ctx_type,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL,sess=sess)
+npts = GT.shape[0]
+bpv = CL/npts
+# bpvs[ifile]=bpv
+print('bpv: '+str(bpv))
+#bpv_ctx = CL_ctx/npts
 
 
+# end = time.time()
+# time_spent = end - start
+# time_spents[ifile] = int(time_spent)
+# nmins = int(time_spent//60)
+# nsecs = int(np.round(time_spent-nmins*60))
+# print('time spent:' + str(np.round(time_spent,2)))
 
-    if not ENC:
-    
-        TP,FP,FN = compare_Locations(dec_Loc,Location)
-    
-    if ENC:
-        ac_model.end_encoding()
-        # if not slow:
-        #     np.save('Desds.npy',globz.Desds)   
-        
-    
-    CL = os.path.getsize(bspath)*8
-    
-    CLs[ifile] = CL
-    npts = GT.shape[0]
-    bpv = CL/npts
-    bpvs[ifile]=bpv
-    print('bpv: '+str(bpv))
-    #bpv_ctx = CL_ctx/npts
-    
-    
-    end = time.time()
-    time_spent = end - start
-    time_spents[ifile] = int(time_spent)
-    nmins = int(time_spent//60)
-    nsecs = int(np.round(time_spent-nmins*60))
-    # print('time spent:' + str(np.round(time_spent,2)))
-    
-    print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
+# print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
 
-ave_bpv = np.mean(bpvs)
-print('ave. bpv: '+str(ave_bpv))
+# ave_bpv = np.mean(bpvs)
+# print('ave. bpv: '+str(ave_bpv))
 
-if ENC:
-    np.save(output_dir+'info.npy',{'CLs':CLs,'times':time_spents,'bpvs':bpvs,'fpaths':filepaths,'ave_bpv':ave_bpv})
+# if ENC:
+#     np.save(output_dir+'info.npy',{'CLs':CLs,'times':time_spents,'bpvs':bpvs,'fpaths':filepaths,'ave_bpv':ave_bpv})
 
 
-print('min bpv:'+str(np.min(bpvs)))
-print('max bpv:'+str(np.max(bpvs)))
-print('ave bpv:'+str(np.mean(bpvs)))
+# print('min bpv:'+str(np.min(bpvs)))
+# print('max bpv:'+str(np.max(bpvs)))
+# print('ave bpv:'+str(np.mean(bpvs)))
 
-print(bs_dir)
+# print(bs_dir)
 
 
 

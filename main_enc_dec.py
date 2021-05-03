@@ -39,18 +39,19 @@ ds = pc_ds(sample)
 # level = 8
 ori_level = ds.bitdepth
 ENC = 0
-if ENC:
+debug_dec = 0
+if ENC or debug_dec:
     ifile=0
     filepath = ds.filepaths[ifile]
-else:
-    bs_dir = '/media/emre/Data/main_enc_dec/ricardo10_20210430-133410/bss/'
+if not ENC:
+    bs_dir = '/media/emre/Data/main_enc_dec/ricardo10_20210430-145919/bss/'
 # if not ENC: 
 #     bs_dir = '/media/emre/Data/euvip_tests/loot10_20210427-154851/bss/'
     
 # ymax = 10000 #crop point cloud to a maximum y for debugging
 ########
 globz.batch_size = 10000#0000
-from enc_functs_fast42 import get_temps_dests2 
+from enc_functs_fast42d import get_temps_dests2 
 #########
 ctx_type = 100
 
@@ -82,7 +83,7 @@ sess = tf1.Session()
 sess.run(tf1.global_variables_initializer())
 nintbits = ori_level*np.ones((6,),int)
 lrGTs = dict()
-if ENC:
+if ENC or debug_dec:
     GT = pcread(filepath).astype('int')
     minsG = np.min(GT ,0)
     maxesG = np.max(GT,0)
@@ -100,7 +101,7 @@ if ENC:
     for ibit in range(64):
         lowest_str = lowest_str+str(lowest_bs[ibit])
     write_bits(lowest_str+'1',bs_dir+'lowest.dat')
-else:
+if not ENC:
     lowest_str = read_bits(bs_dir+'lowest.dat')[0:64]
     lowest_bs = np.zeros([64,],int)
     for ibit in range(64):
@@ -110,25 +111,27 @@ else:
     
     minmaxesG =read_ints(nintbits,bs_dir+'maxes_mins.dat')
     lrmm = np.copy(minmaxesG[np.newaxis,:])
-    lrmms=np.zeros((ori_level,6),int)
+    lrmms=np.zeros((ori_level+1,6),int)
+    lrmms[ori_level] = lrmm
     for il in range(ori_level-2):
         lrmm = lowerResolution(lrmm)
         lrmms[ori_level-il-1,:] = lrmm
         
 start = time.time()
 
-for level in range(3,4):#ori_level+1):
+for level in range(3,ori_level+1):
     
-    
+    globz.isymb = 0
+    globz.iBBr = 0
     bspath = bs_dir+'level'+str(level)+'.dat'
     ac_model = ac_model2(2,bspath,ENC)
     
-    if ENC:
+    if ENC or debug_dec:
         mins1 = np.min(lrGTs[level] ,0)
         maxes1 = np.max(lrGTs[level],0)
         Location = lrGTs[level] -mins1+32
 
-    else:
+    if not ENC:
         mins1 = lrmms[level,0:3]
         maxes1 = lrmms[level,3:6]
     
@@ -142,7 +145,7 @@ for level in range(3,4):#ori_level+1):
     globz.LocM = LocM
 
 
-    if ENC:
+    if ENC or debug_dec:
         Loc_ro = np.unique(Location[:,[1,0,2]],axis=0)
         Location[:,[1,0,2]] = Loc_ro
         globz.Loc = Location
@@ -150,18 +153,23 @@ for level in range(3,4):#ori_level+1):
 
 
 
-    dec_Loc= get_temps_dests2(ctx_type,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL,sess=sess)
+    dec_Loc= get_temps_dests2(ctx_type,ENC,nn_model = m,ac_model=ac_model,maxesL = maxesL,sess=sess,bs_dir=bs_dir,save_SSL=True,level=level)
 
+    if not ENC and debug_dec:
+    
+        TP,FP,FN = compare_Locations(dec_Loc,Location)
+        if FP.shape[0]>0 or FN.shape[0]>0:
+            fbdgvdfsga=5
+
+    if not ENC:
+        lrGTs[level] = dec_Loc+mins1-32
 
 
     if ENC:
         ac_model.end_encoding()
-    # if not slow:
-    #     np.save('Desds.npy',globz.Desds)   
-    
-if not ENC:
 
-    TP,FP,FN = compare_Locations(dec_Loc,Location)
+
+dec_GT = lrGTs[level]
 
 
 CL = get_dir_size(bs_dir)

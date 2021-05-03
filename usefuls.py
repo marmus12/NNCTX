@@ -233,10 +233,21 @@ def compare_Locations(Loc1,GT):
     
     
     
+def dec2bin2(inte,nbits):
+    
+    intbin = dec2bin(inte)
+    n0s = nbits-len(intbin)
+    assert(n0s>=0)
+    return '0'*n0s +intbin
     
     
+def bin2dec2(bits):
+    nbits = len(bits)
+    dec = 0
+    for ib,bit in enumerate(bits):        
+        dec+=2**(nbits-ib-1)*int(bit)
+    return dec
     
-
 
 
 # a = np.array([[4, 6],[2, 6],[5, 2]])

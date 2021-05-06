@@ -363,7 +363,7 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch=0):
     
 def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
     
-   
+    start = time.time()      
     
     sess = tf1.Session()
     
@@ -399,6 +399,9 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
         lrGTs[2] = vol2inds(vol)
         
         minmaxesG =read_ints(nintbits,bs_dir+'maxes_mins.dat')
+        
+     
+        
         lrmm = np.copy(minmaxesG[np.newaxis,:])
         lrmms=np.zeros((ori_level+1,6),int)
         lrmms[ori_level] = lrmm
@@ -427,7 +430,7 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
             
             
             
-    start = time.time()
+
     
     for level in range(3,ori_level+1):
         

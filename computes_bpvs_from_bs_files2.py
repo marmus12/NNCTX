@@ -17,18 +17,19 @@ from datetime import datetime
 root_test_dir ='/media/emre/Data/euvip_tests/'
 #LEVELS 1,2 ARE ALREADY ACCOUNTED FOR with 64 bits
 #%% 
-sample='phil10'#COMPLETE SET
-euviptest_dirs = {10:root_test_dir+'phil1010_20210413-152631/',
-                  9:root_test_dir+'phil109_20210414-145022/',
-                  8:root_test_dir+'phil108_20210414-211952/',
-                  7:root_test_dir+'phil107_20210414-230103/',
-                  6:root_test_dir+'phil106_20210430-125546/',
-                  5:root_test_dir+'phil105_20210430-131922/',
-                  4:root_test_dir+'phil104_20210430-195614/',
-                  3:root_test_dir+'phil103_20210404-210524/'}
+sample='phil9'#COMPLETE SET
+euviptest_dirs = {9:root_test_dir+'phil99_20210506-143455/'}#,
+                   # 8:root_test_dir+'',
+                   # 7:root_test_dir+'',
+                   # 6:root_test_dir+'',
+                   # 5:root_test_dir+'',
+                   # 4:root_test_dir+'',
+                   # 3:root_test_dir+''}
+
+last_run_level = 9
 
 
-last_run_level = 3
+#%%
 output_root = '/media/emre/Data/bpv_results/'
 curr_date = datetime.now().strftime("%Y%m%d-%H%M")
 output_dir = output_root + sample + '_' + curr_date + '/'
@@ -64,7 +65,9 @@ else:
 filepaths = glob(ply_dir +'*.ply')#[::-1]
 CLs = np.zeros((np.max(levels)+1,nframes),'int')
 bpvs = np.zeros((nframes,),'float')
+
 for level in levels:
+    
     print('level:'+str(level))
     bss_dir = euviptest_dirs[level] +'bss/'
     assert(sample in bss_dir)
@@ -72,30 +75,18 @@ for level in levels:
     bs_paths = glob(bss_dir+'*.dat')
     
     nfiles = len(bs_paths)
-    # bpvs = np.zeros((nfiles,),'float')
+
     for iif,iframe in enumerate(iframes):
-        # bspath =  bs_paths[ifile]
+
         bspath = euviptest_dirs[level]+'bss/bs_'+iframe+'.dat'
-        # iframe = bspath.split('bs_')[1].split('.dat')[0]
-        
-        # for fpath in filepaths:
-        if body=='full':
-            filepath = ply_dir + sample + '_vox10_' + iframe + '.ply'
-        # npts = pcread(filepath).shape[0]
-    
-    
+            
         CLs[level,iif] = os.path.getsize(bspath)*8
-        # bpvs[ifile] = CL/npts
-        # print(ifile)
+
         
 for iif,iframe in enumerate(iframes):
     if iif%50==0:
         print(str(iif)+'/'+str(nframes))
-    # for fpath in filepaths:
-    # if body=='full':
-    #     filepath = ply_dir + sample + '_vox10_' + iframe + '.ply'  
-    # elif body=='upper':
-    #     filepath = ply_dir +  'frame' + iframe + '.ply'          
+   
     npts = ds.nptss[ds.iframe2ifile(iframe)]#pcread(filepath).shape[0]
     
     bpvs[iif]=(np.sum(CLs[:,iif])+64)/npts #+64 accounts for level 1,2

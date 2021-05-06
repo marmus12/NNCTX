@@ -30,12 +30,12 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # fullbody
-sample = 'phil10'#'redandblack'#'longdress'#'loot'
+sample = 'phil9'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 filepaths = ds.filepaths#[0:1]
 #########
-level = 3
+level = 9
 ori_level = ds.bitdepth
 ENC = 1
 if not ENC: 

@@ -29,26 +29,15 @@ from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-# fullbody
-sample = 'loot'#'redandblack'#'longdress'#'loot'
 
-ds = pc_ds(sample)
-# filepaths = ds.filepaths#[0:30]
-
-#########
-# level = 8
-ori_level = ds.bitdepth
-# ENC = 0
-# debug_dec = 0
-# if ENC or debug_dec:
-ifile=0
-filepath = ds.filepaths[ifile]
-# if not ENC:
-#     bs_dir = '/media/emre/Data/main_enc_dec/ricardo10_20210430-145919/bss/'
-# if not ENC: 
-#     bs_dir = '/media/emre/Data/euvip_tests/loot10_20210427-154851/bss/'
-    
-# ymax = 10000 #crop point cloud to a maximum y for debugging
+# sample = 'redandblack'#'redandblack'#'longdress'#'loot'
+# ds = pc_ds(sample)
+# ori_level = ds.bitdepth
+# ifile=50
+# filepath = ds.filepaths[ifile]
+sample = 'Thaidancer'
+filepath = '/media/emre/Data/DATA/Thaidancer_viewdep_vox12.ply'
+ori_level=12
 ########
 globz.batch_size = 10000#0000
 from enc_functs_fast42d import ENCODE_DECODE
@@ -62,8 +51,8 @@ ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 #################################################################
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 output_root = '/media/emre/Data/main_enc_dec/'
-if ds.body=='upper':
-    assert(str(ori_level) in sample)
+# if ds.body=='upper':
+#     assert(str(ori_level) in sample)
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
 # if ENC:
 output_dir = output_root + sample +'_' + curr_date + '/'
@@ -97,7 +86,7 @@ npts = GT.shape[0]
 bpv = CL/npts
 # bpvs[ifile]=bpv
 print('bpv: '+str(bpv))
-#bpv_ctx = CL_ctx/npts
+
 
 
 # end = time.time()

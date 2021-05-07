@@ -71,22 +71,33 @@ def read_bits(fpath) :
         
     return rbits
 
-
-def write_ints(ints,nintbits,fpath):
+def ints2bs(ints,nintbits):
     
     inbits = ''
     for i,inte in enumerate(ints):
         intbin = dec2bin(inte)
         
         inbits=inbits+'0'*(nintbits[i]-len(intbin)) +intbin
+        
+    return inbits
+
+def write_ints(ints,nintbits,fpath):
+    
+    inbits = ints2bs(ints,nintbits)
     
     inbits = inbits+'1'
 
     write_bits(inbits,fpath)
 
 def read_ints(nintbits,fpath):
-    ints = np.zeros(shape=(len(nintbits),),dtype=int)
+    
     bits = read_bits(fpath)
+    
+    ints = bs2ints(bits,nintbits)
+    return ints
+            
+def bs2ints(bits,nintbits):
+    ints = np.zeros(shape=(len(nintbits),),dtype=int)
     t=0
     for ii,nintbit in enumerate(nintbits):
         intbits = bits[t:(t+nintbit)]
@@ -95,9 +106,9 @@ def read_ints(nintbits,fpath):
             theint+=2**(nintbit-1-k)*int(intbit)
         ints[ii] = theint
         t+=nintbit
-    return ints
-            
-        
+
+
+    return ints        
 
 
 def plt_imshow(im,figsize=(12,12)):

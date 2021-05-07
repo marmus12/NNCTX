@@ -18,15 +18,16 @@ root_test_dir ='/media/emre/Data/euvip_tests/'
 #LEVELS 1,2 ARE ALREADY ACCOUNTED FOR with 64 bits
 #%% 
 sample='phil9'#COMPLETE SET
-euviptest_dirs = {9:root_test_dir+'phil99_20210506-143455/'}#,
-                   # 8:root_test_dir+'',
-                   # 7:root_test_dir+'',
-                   # 6:root_test_dir+'',
-                   # 5:root_test_dir+'',
-                   # 4:root_test_dir+'',
-                   # 3:root_test_dir+''}
+euviptest_dirs = {9:root_test_dir+'phil99_20210506-143455/',
+                  8:root_test_dir+'phil98_20210506-192620/',
+                  7:root_test_dir+'phil97_20210506-190944/',
+                  6:root_test_dir+'phil96_20210507-134732/',
+                  5:root_test_dir+'phil95_20210507-135650/',
+                  4:root_test_dir+'phil94_20210507-140057/',
+                  3:root_test_dir+'phil93_20210507-140439/'}
 
-last_run_level = 9
+
+last_run_level = 3
 
 
 #%%

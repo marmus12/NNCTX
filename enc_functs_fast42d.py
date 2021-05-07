@@ -16,6 +16,9 @@ import globz
 import time
 from ac_functs import ac_model2
 from dec2bin import dec2bin
+from runlength import RLED
+
+
 def N_BackForth(sBBi): ##checked with matlab output
 
 # %% Move from current resolution one level down and then one up
@@ -151,7 +154,9 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     SectSize = (maxZ,maxX)
 
     # %% Find sections in Loc
-    StartStopLength = np.zeros((maxY+10,3),dtype='int')    
+    lSSL = maxY+10
+    StartStopLength = np.zeros((lSSL ,3),dtype='int')    
+    
     if ENC:
 
         icPC = globz.Loc[0,1]    
@@ -174,15 +179,17 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
         
         if level==ori_level:
 
-            ssbits = ''#dec2bin2(ncPC-16,level+2)
+            ssbits = ''
             for ssbit in SSL2:
                 ssbits=ssbits+str(int(ssbit))
             
-            # ssbits = ssbits + dec2bin2(ncPC,level+10)
+    
+
+            # ssbits = ssbits + '1'           
+            # write_bits(ssbits,bs_dir+'SSL.dat')
             
-            ssbits = ssbits + '1'
+            RLED(ssbits,lSSL,lSSL,1,bs_dir+'rSSL.dat')
             
-            write_bits(ssbits,bs_dir+'SSL.dat')
     else:    
         
         # ssbits = read_bits(bs_dir+'SSL'+str(level)+'.dat')    
@@ -200,7 +207,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     # %% Find sections in LocM
     
 
-    StartStopLengthM = np.zeros((maxY+10,3),'int')
+    StartStopLengthM = np.zeros((lSSL,3),'int')
     icPC = globz.LocM[0,1]
     StartStopLengthM[icPC,0] = 0
     for iBB in range(globz.LocM.shape[0]):
@@ -409,10 +416,14 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
             lrmm = lowerResolution(lrmm)
             lrmms[ori_level-il-1,:] = lrmm
             
-            
+        mins11 = lrmms[ori_level,1]
+        maxes11 = lrmms[ori_level,4]        
+        lSSL = maxes11-mins11+32+10
+                
        ##get dssls     
         dSSLs  = np.zeros((ori_level+1,4000),int)
-        ssbits = read_bits(bs_dir+'SSL.dat')[:-1]#[(ori_level+2):-1]
+        #ssbits = read_bits(bs_dir+'SSL.dat')[:-1]#[(ori_level+2):-1]
+        ssbits = RLED('',lSSL,lSSL,0,bs_dir+'rSSL.dat')
         # dSSL = ssbits    
         for ib,bit in enumerate(ssbits):
             dSSLs[ori_level,ib] = int(bit) 

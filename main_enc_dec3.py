@@ -30,7 +30,7 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # fullbody
-sample = 'redandblack'#'redandblack'#'longdress'#'loot'
+sample = 'loot'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 

@@ -9,7 +9,7 @@ import numpy as np
 import sys
 from pcloud_functs import pcshow,pcread,lowerResolution,inds2vol,vol2inds,dilate_Loc
 sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
-from usefuls import in1d_index,plt_imshow,write_ints,read_ints,write_bits,read_bits,dec2bin2,bin2dec2
+from usefuls import in1d_index,plt_imshow,write_ints,read_ints,write_bits,read_bits,dec2bin2,bin2dec2,ints2bs,bs2ints
 import arithmeticcoding as arc
 import tensorflow.compat.v1 as tf1
 import globz
@@ -85,7 +85,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
                 iTin+=1  
         for xi in range(ix-b,ix+b+1):                
             for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrueM[zi,xi]## TODO CHECK IF THIS IS ALIGNED WITH enc_fast_4
+                Temp[iTemp1,iTin] = BWTrueM[zi,xi]
                 iTin+=1                  
         for xi in range(ix-b,ix+b+1):                
             for zi in range(iz-b,iz+b+1):
@@ -188,7 +188,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             # ssbits = ssbits + '1'           
             # write_bits(ssbits,bs_dir+'SSL.dat')
             
-            RLED(ssbits,lSSL,lSSL,1,bs_dir+'rSSL.dat')
+            RLED(ssbits[32:-9],lSSL-41,lSSL-41,1,bs_dir+'rSSL.dat')
             
     else:    
         
@@ -378,12 +378,14 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
     nintbits = ori_level*np.ones((6,),int)
     lrGTs = dict()
     if ENC:# or debug_dec:
-        
+
         minsG = np.min(GT ,0)
         maxesG = np.max(GT,0)
         minmaxesG = np.concatenate((minsG,maxesG))
-    
-        write_ints(minmaxesG,nintbits,bs_dir+'maxes_mins.dat')    
+        
+        # write_ints(minmaxesG,nintbits,bs_dir+'maxes_mins.dat')    
+        sibs = ints2bs(minmaxesG,nintbits)
+        
         lrGTs[ori_level] = GT
         lrGT = np.copy(GT)
         for il in range(ori_level-2):
@@ -394,18 +396,26 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
         lowest_str = ''
         for ibit in range(64):
             lowest_str = lowest_str+str(lowest_bs[ibit])
-        write_bits(lowest_str+'1',bs_dir+'lowest.dat')
-        
+            
+        #write_bits(lowest_str+'1',bs_dir+'lowest.dat')
+        sibs = sibs+lowest_str+'1'
+        write_bits(sibs,bs_dir+'side_info.bs')
         dSSLs = 0
     if not ENC:
-        lowest_str = read_bits(bs_dir+'lowest.dat')[0:64]
+        
+        # minmaxesG =read_ints(nintbits,bs_dir+'maxes_mins.dat')
+        # lowest_str = read_bits(bs_dir+'lowest.dat')[0:64]
+        sibs = read_bits(bs_dir+'side_info.bs')
+        minmaxesG = bs2ints(sibs[0:np.sum(nintbits)],nintbits)
+        lowest_str = sibs[np.sum(nintbits):-1]
+        
         lowest_bs = np.zeros([64,],int)
         for ibit in range(64):
             lowest_bs[ibit] = int(lowest_str[ibit])
         vol = lowest_bs.reshape([4,4,4])
         lrGTs[2] = vol2inds(vol)
         
-        minmaxesG =read_ints(nintbits,bs_dir+'maxes_mins.dat')
+        
         
      
         
@@ -423,7 +433,8 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
        ##get dssls     
         dSSLs  = np.zeros((ori_level+1,4000),int)
         #ssbits = read_bits(bs_dir+'SSL.dat')[:-1]#[(ori_level+2):-1]
-        ssbits = RLED('',lSSL,lSSL,0,bs_dir+'rSSL.dat')
+        ssbits = 32*'0'
+        ssbits = ssbits + RLED('',lSSL-41,lSSL-41,0,bs_dir+'rSSL.dat') +9*'0'
         # dSSL = ssbits    
         for ib,bit in enumerate(ssbits):
             dSSLs[ori_level,ib] = int(bit) 

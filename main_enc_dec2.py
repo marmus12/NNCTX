@@ -16,7 +16,7 @@ import h5py
 import tensorflow.compat.v1 as tf1
 from models import tfint10_2,tfint10_3
 from ac_functs import ac_model2
-from usefuls import compare_Locations,plt_imshow,write_bits,read_bits,write_ints,read_ints,get_dir_size
+from usefuls import show_time_spent,compare_Locations,plt_imshow,write_bits,read_bits,write_ints,read_ints,get_dir_size
 import time
 from glob import glob
 import globz
@@ -28,16 +28,24 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-# sample = 'redandblack'#'redandblack'#'longdress'#'loot'
-# ds = pc_ds(sample)
-# ori_level = ds.bitdepth
-# ifile=50
-# filepath = ds.filepaths[ifile]
-sample = 'Thaidancer'
-filepath = '/media/emre/Data/DATA/Thaidancer_viewdep_vox12.ply'
-ori_level=12
+sample = 'redandblack'#'redandblack'#'longdress'#'loot'
+ds = pc_ds(sample)
+ori_level = ds.bitdepth
+ifile=0
+filepath = ds.filepaths[ifile]
+
+nlevel_down = 2
+#%%
+# sample = 'Thaidancer'
+# filepath = '/media/emre/Data/DATA/Thaidancer_viewdep_vox12.ply'
+# ori_level=12
+#%%
+# sample = 'boxer'
+# filepath = '/media/emre/Data/DATA/boxer_viewdep_vox12.ply'
+# ori_level=10
+
 ########
 globz.batch_size = 10000#0000
 from enc_functs_fast42d import ENCODE_DECODE
@@ -68,10 +76,12 @@ nn_model = tfint10_3(ckpt_path)
 
 GT = pcread(filepath).astype('int')
 #%%#LOWER RES INPUT FOR DEBUGGING:
-# nlevel_down = 0
-# ori_level = ori_level-nlevel_down
-# for il in range(nlevel_down):
-#     GT = lowerResolution(GT)
+
+ori_level = ori_level-nlevel_down
+for il in range(nlevel_down):
+    GT = lowerResolution(GT)
+    
+print('input level:'+str(ori_level))
 #%%###################################    
 # bs_dir = '/media/emre/Data/main_enc_dec/redandblack_20210430-184615/bss/'
 _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
@@ -86,10 +96,13 @@ npts = GT.shape[0]
 bpv = CL/npts
 # bpvs[ifile]=bpv
 print('bpv: '+str(bpv))
+print('sample:'+str(sample))
+print('input level:'+str(ori_level))
+print('enc:')
+show_time_spent(time_spente)
+print('dec:')
+show_time_spent(time_spentd)
 
-
-
-# end = time.time()
 # time_spent = end - start
 # time_spents[ifile] = int(time_spent)
 # nmins = int(time_spent//60)

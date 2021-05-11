@@ -207,7 +207,10 @@ def asvoid(arr):
     the entire row.
     http://stackoverflow.com/a/16840350/190597 (Jaime, 2013-05)
     Warning: When using asvoid for comparison, note that float zeros may compare UNEQUALLY
-    >>> asvoid([-0.]) == asvoid([0.])
+    >>> asvoid([-0.]) == asvoid([0.])def show_time_spent(time_spent):
+    nmins = int(time_spent//60)
+    nsecs = int(np.round(time_spent-nmins*60))
+    print('time spent:' + str(np.round(time_spent,2)))
     array([False], dtype=bool)
     """
     arr = np.ascontiguousarray(arr)
@@ -260,7 +263,11 @@ def bin2dec2(bits):
     return dec
     
 
-
+def show_time_spent(time_spent):
+    nmins = int(time_spent//60)
+    nsecs = int(np.round(time_spent-nmins*60))
+    print('time spent: ' + str(nmins) + 'm ' + str(nsecs) + 's')
+    
 # a = np.array([[4, 6],[2, 6],[5, 2]])
 # b = np.array([[1, 7],[1, 8],[2, 6],[2, 1],[2, 4],[4, 6],[4, 7],[5, 9],[5, 2],[5, 1]])
 

@@ -30,7 +30,7 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # fullbody
-sample = 'phil9'#'redandblack'#'longdress'#'loot'
+sample = 'boxer'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 filepaths = ds.filepaths#[0:1]
@@ -81,10 +81,12 @@ for ifile,filepath in enumerate(filepaths):
     print(str(ifile) + '/' + str(nfiles))
     start = time.time()
     #%%####
-    if ds.body=='full':
-        iframe = filepaths[ifile].split('vox10_')[1].split('.ply')[0]
-    else:
-        iframe = filepaths[ifile].split('frame')[1].split('.ply')[0]
+    # if ds.body=='full':
+        # iframe = filepaths[ifile].split('vox10_')[1].split('.ply')[0]
+    iframe = ds.ifile2iframe(ifile)
+    # else:
+    #     # iframe = filepaths[ifile].split('frame')[1].split('.ply')[0]
+    #     iframe = ds.ifile2iframe(ifile)
     bspath =  bs_dir +'bs_'+iframe+'.dat'
     ac_model = ac_model2(2,bspath,ENC)
     GT = pcread(filepath).astype('int')

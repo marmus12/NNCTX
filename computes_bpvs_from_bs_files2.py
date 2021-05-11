@@ -7,7 +7,7 @@ Created on Fri Apr  2 15:19:06 2021
 """
 
 from glob import glob
-from pcloud_functs import pcread
+from pcloud_functs import pcread,lowerResolution
 import os
 import numpy as np
 from dataset import pc_ds
@@ -17,17 +17,23 @@ from datetime import datetime
 root_test_dir ='/media/emre/Data/euvip_tests/'
 #LEVELS 1,2 ARE ALREADY ACCOUNTED FOR with 64 bits
 #%% 
-sample='phil9'#COMPLETE SET
-euviptest_dirs = {9:root_test_dir+'phil99_20210506-143455/',
-                  8:root_test_dir+'phil98_20210506-192620/',
-                  7:root_test_dir+'phil97_20210506-190944/',
-                  6:root_test_dir+'phil96_20210507-134732/',
-                  5:root_test_dir+'phil95_20210507-135650/',
-                  4:root_test_dir+'phil94_20210507-140057/',
-                  3:root_test_dir+'phil93_20210507-140439/'}
+sample='boxer'#COMPLETE SET
+euviptest_dirs = { 9:root_test_dir+'boxer9_20210507-175259/',
+                  8:root_test_dir+'boxer8_20210507-180156/',
+                  7:root_test_dir+'boxer7_20210507-180314/',
+                  6:root_test_dir+'boxer6_20210507-180718/',
+                  5:root_test_dir+'boxer5_20210507-180817/',
+                  4:root_test_dir+'boxer4_20210507-180908/',
+                  3:root_test_dir+'boxer3_20210507-181016/'}
+                  # 8:root_test_dir+'phil98_20210506-192620/',
+                  # 7:root_test_dir+'phil97_20210506-190944/',
+                  # 6:root_test_dir+'phil96_20210507-134732/',
+                  # 5:root_test_dir+'phil95_20210507-135650/',
+                  # 4:root_test_dir+'phil94_20210507-140057/',
+                  # 3:root_test_dir+'phil93_20210507-140439/'}
 
 
-last_run_level = 3
+last_run_level = 5
 
 
 #%%
@@ -59,11 +65,12 @@ nframes = len(iframes)
 
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 
-if body=='full':
-    ply_dir = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/'
-else:    
-    ply_dir = PCC_Data_Dir + sample +  '/ply/'
-filepaths = glob(ply_dir +'*.ply')#[::-1]
+# if body=='full':
+#     ply_dir = PCC_Data_Dir + sample +  '/' +  sample +  '/Ply/'
+# else:    
+#     ply_dir = PCC_Data_Dir + sample +  '/ply/'
+# ply_dir = ds.ply_dir
+filepaths = ds.filepaths#glob(ply_dir +'*.ply')#[::-1]
 CLs = np.zeros((np.max(levels)+1,nframes),'int')
 bpvs = np.zeros((nframes,),'float')
 
@@ -87,8 +94,15 @@ for level in levels:
 for iif,iframe in enumerate(iframes):
     if iif%50==0:
         print(str(iif)+'/'+str(nframes))
-   
-    npts = ds.nptss[ds.iframe2ifile(iframe)]#pcread(filepath).shape[0]
+    
+    if sample in ['thaidancer','boxer']:
+
+        Loc = ds.read_frame(0)
+        for il in range(ds.bitdepth-np.max(list(euviptest_dirs.keys()))):
+            Loc = lowerResolution(Loc)
+        npts = Loc.shape[0]
+    else:
+        npts = ds.nptss[ds.iframe2ifile(iframe)]
     
     bpvs[iif]=(np.sum(CLs[:,iif])+64)/npts #+64 accounts for level 1,2
     

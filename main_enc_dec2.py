@@ -28,15 +28,16 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
+from enc_functs_fast43d import ENCODE_DECODE
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-sample = 'redandblack'#'redandblack'#'longdress'#'loot'
+sample = 'loot'#'redandblack'#'longdress'#'loot'
 ds = pc_ds(sample)
 ori_level = ds.bitdepth
 ifile=0
 filepath = ds.filepaths[ifile]
 
-nlevel_down = 2
+nlevel_down = 0
 #%%
 # sample = 'Thaidancer'
 # filepath = '/media/emre/Data/DATA/Thaidancer_viewdep_vox12.ply'
@@ -48,7 +49,7 @@ nlevel_down = 2
 
 ########
 globz.batch_size = 10000#0000
-from enc_functs_fast42d import ENCODE_DECODE
+
 #########
 ctx_type = 100
 

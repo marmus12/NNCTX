@@ -50,15 +50,8 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 
 
-def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM, ctx_type ,b,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None,for_train=False):
+def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM, ctx_type ,b,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None,for_train=False):
 
-    # global esymbs,symbs
-
-    # wsize = 5#np.sqrt(ctx_type//4).astype(int)
-    # b = 2#(wsize-1)//2
-    
-    # % Go over the possible points
-   
         
     nT = StartStopLengthM[icPC,2]    
     Temp = np.zeros((nT,ctx_type),'int')
@@ -68,54 +61,38 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
 
 
 
-    iTemp1 = -1
-    for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-        iz = globz.LocM[iBB,2]
-        ix = globz.LocM[iBB,0]
+    # iTemp1 = -1
+    for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
+        iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
+        ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
 
-     
-        iTemp1+=1   
-        iTin = 0
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrue2[zi,xi]
-                iTin+=1 
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrue1[zi,xi]
-                iTin+=1  
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrueM[zi,xi]
-                iTin+=1                  
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
-                iTin+=1                      
+        Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
 
+        Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+
+        Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+
+        Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+                # iTin+=1 
     if not for_train:               
-        nb = np.ceil(nT/globz.batch_size).astype('int')
-        for ib in range(nb):
-            bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
-            # Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
-            Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = sess.run(nn_model.output,feed_dict={nn_model.input:bTemp})
-                               
 
-    iTemp = -1
+        Tprobs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp})           
+
+    # iTemp = -1
 ##########2nd loop##########################################
-    for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-        iTemp+=1
-        iz = globz.LocM[iBB,2]
-        ix = globz.LocM[iBB,0]
+    for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
+        # iTemp+=1
+        iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
+        ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
         
 
         if for_train:
-            Des[iTemp] = BWTrue[iz, ix]
+            Des[iiBB] = BWTrue[iz, ix]
             
         if ENC and not for_train:
             symb = BWTrue[iz, ix]#= Des[iTemp]
             
-        probs = Tprobs[iTemp,:]
+        probs = Tprobs[iiBB,:]
 
         if not for_train:
             freq = np.ceil(probs*(2**14)).astype('int')#+1
@@ -134,13 +111,11 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
                     globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
                     globz.iBBr +=1
                 
-            # globz.isymb +=1      
-        #############################3
 
         
 
     if for_train:
-        return Temp.astype('bool'),Des
+        return Temp,Des
 
 def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,for_train=False,bs_dir=None,save_SSL=True,level=0,ori_level=0,dSSLs=0):
 
@@ -279,30 +254,34 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
                         BWTrue2[globz.Loc[iBB,2], globz.Loc[iBB,0] ] = 1
 
             BWTrue1M = np.zeros( SectSize,'int')
+            # SLoc1M = np.zeros((StartStopLengthM[icPC+1,2],2),'int')
             if(icPC < ncPC):
                 if( StartStopLengthM[icPC+1,1] > 0 ):
                     for iBB in range(StartStopLengthM[icPC+1,0],StartStopLengthM[icPC+1,1]+1):
-                        # try:
-                            BWTrue1M[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
-                        # except:
-                        #     fdgsd=5
-                                
+                        
+                            iz,ix = globz.LocM[iBB,2], globz.LocM[iBB,0]
+                            # SLoc1M[t,:] =  iz,ix
+                            BWTrue1M[ iz,ix] = 1
+                            
 
             BWTrueM = np.zeros( SectSize,'int')
+            SLocM = np.zeros((StartStopLengthM[icPC,2],2),'int')
             if( StartStopLengthM[icPC,1] > 0 ):
-                for iBB in range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-                    # try:
-                    BWTrueM[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
+                for t,iBB in enumerate(range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
+                    
+                    iz,ix = globz.LocM[iBB,2], globz.LocM[iBB,0]
+                    SLocM[t,:] =  iz,ix
+                    BWTrueM[ iz,ix] = 1
             
             iBBr_prev = globz.iBBr
             if for_train:
-                Temp, Des = OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,b,ENC,nn_model,ac_model,sess=sess,for_train=for_train)              
+                Temp, Des = OneSectOctMask2(SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,b,ENC,nn_model,ac_model,sess=sess,for_train=for_train)              
                 Temps[ iTT:(iTT+Temp.shape[0]),:]  = Temp
                 Dests[ iTT:(iTT+Temp.shape[0])]  = Des    
                 iTT = iTT+Temp.shape[0]
 
             else:
-                OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,b,ENC,nn_model,ac_model,sess=sess)              
+                OneSectOctMask2(SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,b,ENC,nn_model,ac_model,sess=sess)              
 
             iBBr_now = globz.iBBr
             # if ENC:   

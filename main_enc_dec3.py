@@ -29,7 +29,12 @@ from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-# fullbody
+continu = 1
+if continu:
+    prev_dir = '/media/emre/Data/main_enc_dec3/loot_20210511-125149/'
+    i_start = 54
+else:
+    i_start = 0
 sample = 'loot'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
@@ -37,7 +42,7 @@ ds = pc_ds(sample)
 #########
 ori_level = ds.bitdepth
 
-filepaths = ds.filepaths#[ifile]
+filepaths = ds.filepaths
 
 ########
 globz.batch_size = 10000#0000
@@ -55,58 +60,92 @@ output_root = '/media/emre/Data/main_enc_dec3/'
 if ds.body=='upper':
     assert(str(ori_level) in sample)
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
-# if ENC:
-output_dir = output_root + sample +'_' + curr_date + '/'
-os.mkdir(output_dir)
+if continu:
+    output_dir = prev_dir
+else:
+    output_dir = output_root + sample +'_' + curr_date + '/'
+    os.mkdir(output_dir)
 curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
 copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])     
 root_bs_dir = output_dir + 'bss/'
-os.mkdir(root_bs_dir)
+if not continu:
+    os.mkdir(root_bs_dir)
 ##################################################################
 # print(bs_dir)
 nn_model = tfint10_3(ckpt_path)
  
 nframes = len(filepaths)
+
+
+# if continu:
+#     res = np.load(output_dir+'info.npy',allow_pickle=True)[()]
+#     times = res['times']
+#     bpvs = res['bpvs']
+# else:
 bpvs = np.zeros((nframes,),'float')
-times = np.zeros((nframes,2),'int')
+times = np.zeros((nframes,2),'int')    
+
 for ifile,filepath in enumerate(filepaths):
-    iframe = ds.ifile2iframe(ifile)
-    assert (iframe in filepath)
     
-    bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
-    os.mkdir(bs_dir)
-    GT = pcread(filepath).astype('int')
+    if continu:
+        condition_on_ifile = ifile>=i_start
+    else:
+        condition_on_ifile = True
+        
+    if condition_on_ifile:
+        iframe = ds.ifile2iframe(ifile)
+        assert (iframe in filepath)
+        
+        bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
+        os.mkdir(bs_dir)
+        GT = pcread(filepath).astype('int')
+        
+        #%%#LOWER RES INPUT FOR DEBUGGING:
+        # nlevel_down = 0
+        # ori_level = ori_level-nlevel_down
+        # for il in range(nlevel_down):
+        #     GT = lowerResolution(GT)
+        #%%###################################    
+        _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
+        dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ori_level)
+        
+        TP,FP,FN=compare_Locations(dec_GT,GT)
+        assert(FP.shape[0]==0)
+        assert(FN.shape[0]==0)
+        CL = get_dir_size(bs_dir)
+        
+        npts = GT.shape[0]
+        bpv = CL/npts
+        bpvs[ifile]=bpv
+        print('iframe: ' +iframe+' bpv: '+str(bpv))
+        
+        
+        times[ifile,0]= int(time_spente)
+        times[ifile,1]= int(time_spentd)
+ 
     
-    #%%#LOWER RES INPUT FOR DEBUGGING:
-    # nlevel_down = 0
-    # ori_level = ori_level-nlevel_down
-    # for il in range(nlevel_down):
-    #     GT = lowerResolution(GT)
-    #%%###################################    
-    # bs_dir = '/media/emre/Data/main_enc_dec/redandblack_20210430-184615/bss/'
-    _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
-    dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ori_level)
+if continu:
+    for ifile in range(i_start):
+        iframe = ds.ifile2iframe(ifile)
+        assert (iframe in filepath)
+        
+        bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
+        
+        CL = get_dir_size(bs_dir)
+        
+        npts =ds.nptss[ifile]
+        bpv = CL/npts
+        bpvs[ifile]=bpv    
     
-    TP,FP,FN=compare_Locations(dec_GT,GT)
-    assert(FP.shape[0]==0)
-    assert(FN.shape[0]==0)
-    CL = get_dir_size(bs_dir)
+ 
     
-    npts = GT.shape[0]
-    bpv = CL/npts
-    bpvs[ifile]=bpv
-    print('iframe: ' +iframe+' bpv: '+str(bpv))
-    
-    
-    times[ifile,0]= int(time_spente)
-    times[ifile,1]= int(time_spentd)
-    
-ave_etime = np.mean(times[:,0])
+ 
+ave_etime = np.mean(times[i_start:,0])
 nminse = int(ave_etime//60)
 nsecse = int(np.round(ave_etime-nminse*60))
 print('ave enc time: ' + str(nminse) + 'm ' + str(nsecse) + 's')
 
-ave_dtime = np.mean(times[:,1])
+ave_dtime = np.mean(times[i_start:,1])
 nminsd = int(ave_dtime//60)
 nsecsd = int(np.round(ave_dtime-nminsd*60))
 print('ave enc time: ' + str(nminsd) + 'm ' + str(nsecsd) + 's')

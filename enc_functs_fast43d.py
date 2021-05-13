@@ -15,7 +15,7 @@ import tensorflow.compat.v1 as tf1
 import globz
 import time
 from ac_functs import ac_model2
-from dec2bin import dec2bin
+# from dec2bin import dec2bin
 from runlength import RLED
 
 
@@ -52,7 +52,7 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM, ctx_type ,b,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None,for_train=False):
 
-        
+    freqstable = arc.SimpleFrequencyTable([10,10] ) #arc.CheckedFrequencyTable(        
     nT = StartStopLengthM[icPC,2]    
     Temp = np.zeros((nT,ctx_type),'int')
     Tprobs = np.zeros((nT,2),'float')
@@ -61,19 +61,37 @@ def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, Se
 
 
 
-    # iTemp1 = -1
+    iTemp1 = -1
     for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
         iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
         ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
 
-        Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+        # Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
 
-        Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+        # Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
 
-        Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+        # Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
 
-        Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
-                # iTin+=1 
+        # Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        iTemp1+=1   
+        iTin = 0
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
+                Temp[iTemp1,iTin] = BWTrue2[zi,xi]
+                iTin+=1 
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
+                Temp[iTemp1,iTin] = BWTrue1[zi,xi]
+                iTin+=1  
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
+                Temp[iTemp1,iTin] = BWTrueM[zi,xi]
+                iTin+=1                  
+        for xi in range(ix-b,ix+b+1):                
+            for zi in range(iz-b,iz+b+1):
+                Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
+                iTin+=1         
+
     if not for_train:               
 
         Tprobs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp})           
@@ -97,13 +115,13 @@ def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, Se
         if not for_train:
             freq = np.ceil(probs*(2**14)).astype('int')#+1
             freqlist = list(freq)   
-            freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+            freqstable.set_frequencies(freqlist)#arc.SimpleFrequencyTable(freqlist ) #arc.CheckedFrequencyTable(
 
             if ENC:
-                ac_model.encode_symbol(freqs,symb)
-
+                #ac_model.encode_symbol(freqstable,symb)
+                ac_model.enc.update(freqstable,symb)
             else:#DECODER
-                symb = ac_model.decode_symbol(freqs)  
+                symb = ac_model.dec.read(freqstable)#ac_model.decode_symbol(freqstable)  
     
                 BWTrue[iz, ix] = symb
                 if symb:
@@ -118,6 +136,7 @@ def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, Se
         return Temp,Des
 
 def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,for_train=False,bs_dir=None,save_SSL=True,level=0,ori_level=0,dSSLs=0):
+
 
     # gtLoc = np.copy(Loc)
     wsize = np.sqrt(ctx_type//4).astype(int)
@@ -302,7 +321,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     if ENC and not for_train:        
 
         freqlist = [10,10]
-        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        freqs = arc.SimpleFrequencyTable(freqlist ) #arc.CheckedFrequencyTable(
         for i_s in range(64):
             ac_model.encode_symbol(freqs,0)
         
@@ -353,10 +372,9 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch=0):
 def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
     
     start = time.time()      
-    
     sess = tf1.Session()
-    
     sess.run(tf1.global_variables_initializer())
+
     nintbits = ori_level*np.ones((6,),int)
     lrGTs = dict()
     if ENC:# or debug_dec:
@@ -396,9 +414,7 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
             lowest_bs[ibit] = int(lowest_str[ibit])
         vol = lowest_bs.reshape([4,4,4])
         lrGTs[2] = vol2inds(vol)
-        
-        
-        
+
      
         
         lrmm = np.copy(minmaxesG[np.newaxis,:])
@@ -430,12 +446,7 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
             dSSLs[level-1,inds] = 1
             # dncPCs[level-1] = np.max(np.where(dSSLs[level-1])[0])
             # print(level)        
-                     
-            
-            
-            
 
-    
     for level in range(3,ori_level+1):
         
         # globz.isymb = 0
@@ -470,11 +481,6 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
 
         dec_Loc= get_temps_dests2(nn_model.ctx_type,ENC,nn_model = nn_model,ac_model=ac_model,maxesL = maxesL,sess=sess,bs_dir=bs_dir,save_SSL=True,level=level,ori_level=ori_level,dSSLs=dSSLs)
     
-        # if not ENC and debug_dec:
-        
-        #     TP,FP,FN = compare_Locations(dec_Loc,Location)
-        #     if FP.shape[0]>0 or FN.shape[0]>0:
-        #         fbdgvdfsga=5
     
         if not ENC:
             lrGTs[level] = dec_Loc+mins1-32

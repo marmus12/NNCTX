@@ -28,7 +28,7 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-from enc_functs_fast43d import ENCODE_DECODE
+from enc_functs_fast42d import ENCODE_DECODE
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 sample = 'loot'#'redandblack'#'longdress'#'loot'
@@ -72,8 +72,10 @@ bs_dir = output_dir + 'bss/'
 os.mkdir(bs_dir)
 ##################################################################
 # print(bs_dir)
+
+
 nn_model = tfint10_3(ckpt_path)
- 
+
 
 GT = pcread(filepath).astype('int')
 #%%#LOWER RES INPUT FOR DEBUGGING:

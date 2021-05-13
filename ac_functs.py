@@ -79,7 +79,7 @@ class ac_model2:
              self.dec = arithmeticcoding.ArithmeticDecoder(32, bitin)
 
      def encode_symbol(self,freqs,symbol):
-        self.enc.write(freqs, symbol)
+        self.enc.update(freqs, symbol)
         # self.freqs.increment(symbol[0])
 
      def end_encoding(self,):

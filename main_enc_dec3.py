@@ -28,14 +28,17 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
+from enc_functs_fast43d import ENCODE_DECODE
+
+decode=1
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-continu = 1
+continu = 0
 if continu:
     prev_dir = '/media/emre/Data/main_enc_dec3/loot_20210511-125149/'
-    i_start = 54
+    i_start = 242
 else:
     i_start = 0
-sample = 'loot'#'redandblack'#'longdress'#'loot'
+sample = 'ricardo10'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 
@@ -45,8 +48,8 @@ ori_level = ds.bitdepth
 filepaths = ds.filepaths
 
 ########
-globz.batch_size = 10000#0000
-from enc_functs_fast42d import ENCODE_DECODE
+# globz.batch_size = 10000#0000
+
 #########
 ctx_type = 100
 
@@ -77,13 +80,11 @@ nn_model = tfint10_3(ckpt_path)
 nframes = len(filepaths)
 
 
-# if continu:
-#     res = np.load(output_dir+'info.npy',allow_pickle=True)[()]
-#     times = res['times']
-#     bpvs = res['bpvs']
-# else:
 bpvs = np.zeros((nframes,),'float')
 times = np.zeros((nframes,2),'int')    
+
+sess = tf1.Session()
+sess.run(tf1.global_variables_initializer())
 
 for ifile,filepath in enumerate(filepaths):
     
@@ -99,19 +100,16 @@ for ifile,filepath in enumerate(filepaths):
         bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
         os.mkdir(bs_dir)
         GT = pcread(filepath).astype('int')
-        
-        #%%#LOWER RES INPUT FOR DEBUGGING:
-        # nlevel_down = 0
-        # ori_level = ori_level-nlevel_down
-        # for il in range(nlevel_down):
-        #     GT = lowerResolution(GT)
+
         #%%###################################    
-        _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
-        dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ori_level)
-        
-        TP,FP,FN=compare_Locations(dec_GT,GT)
-        assert(FP.shape[0]==0)
-        assert(FN.shape[0]==0)
+        _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,sess,ori_level,GT)
+        if decode:
+            dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,sess,ori_level)      
+            TP,FP,FN=compare_Locations(dec_GT,GT)
+            assert(FP.shape[0]==0)
+            assert(FN.shape[0]==0)
+            times[ifile,1]= int(time_spentd)
+            
         CL = get_dir_size(bs_dir)
         
         npts = GT.shape[0]
@@ -121,13 +119,12 @@ for ifile,filepath in enumerate(filepaths):
         
         
         times[ifile,0]= int(time_spente)
-        times[ifile,1]= int(time_spentd)
+        
  
     
 if continu:
     for ifile in range(i_start):
         iframe = ds.ifile2iframe(ifile)
-        assert (iframe in filepath)
         
         bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
         
@@ -145,11 +142,13 @@ nminse = int(ave_etime//60)
 nsecse = int(np.round(ave_etime-nminse*60))
 print('ave enc time: ' + str(nminse) + 'm ' + str(nsecse) + 's')
 
-ave_dtime = np.mean(times[i_start:,1])
-nminsd = int(ave_dtime//60)
-nsecsd = int(np.round(ave_dtime-nminsd*60))
-print('ave enc time: ' + str(nminsd) + 'm ' + str(nsecsd) + 's')
-
+if decode:
+    ave_dtime = np.mean(times[i_start:,1])
+    nminsd = int(ave_dtime//60)
+    nsecsd = int(np.round(ave_dtime-nminsd*60))
+    print('ave dec time: ' + str(nminsd) + 'm ' + str(nsecsd) + 's')
+else:
+    ave_dtime=0
 
 ave_bpv = np.mean(bpvs)
 print('ave. bpv: '+str(ave_bpv))

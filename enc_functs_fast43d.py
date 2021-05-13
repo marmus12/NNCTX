@@ -29,13 +29,13 @@ def N_BackForth(sBBi): ##checked with matlab output
     Points_parent,iC = np.unique(quotBB,return_inverse=True,axis=0)  #   % size of iC is (nBBx3)
 
     PatEl = np.array( [[0, 0, 0],
-                       [1, 0, 0],
-                       [0, 1, 0],
-                       [1, 1, 0],
-                       [0, 0, 1],
-                       [1, 0, 1],
-                       [0, 1, 1],
-                       [1, 1, 1]])
+                        [1, 0, 0],
+                        [0, 1, 0],
+                        [1, 1, 0],
+                        [0, 0, 1],
+                        [1, 0, 1],
+                        [0, 1, 1],
+                        [1, 1, 1]])
                        
 
     
@@ -52,7 +52,7 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM, ctx_type ,b,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None,for_train=False):
 
-    freqstable = arc.SimpleFrequencyTable([10,10] ) #arc.CheckedFrequencyTable(        
+    # freqstable = arc.SimpleFrequencyTable([10,10] ) #arc.CheckedFrequencyTable(        
     nT = StartStopLengthM[icPC,2]    
     Temp = np.zeros((nT,ctx_type),'int')
     Tprobs = np.zeros((nT,2),'float')
@@ -61,36 +61,36 @@ def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, Se
 
 
 
-    iTemp1 = -1
+    # iTemp1 = -1
     for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
         iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
         ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
 
-        # Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
 
-        # Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
 
-        # Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
 
-        # Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        iTemp1+=1   
-        iTin = 0
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrue2[zi,xi]
-                iTin+=1 
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrue1[zi,xi]
-                iTin+=1  
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrueM[zi,xi]
-                iTin+=1                  
-        for xi in range(ix-b,ix+b+1):                
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
-                iTin+=1         
+        Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten()
+        # iTemp1+=1   
+        # iTin = 0
+        # for xi in range(ix-b,ix+b+1):                
+        #     for zi in range(iz-b,iz+b+1):
+        #         Temp[iTemp1,iTin] = BWTrue2[zi,xi]
+        #         iTin+=1 
+        # for xi in range(ix-b,ix+b+1):                
+        #     for zi in range(iz-b,iz+b+1):
+        #         Temp[iTemp1,iTin] = BWTrue1[zi,xi]
+        #         iTin+=1  
+        # for xi in range(ix-b,ix+b+1):                
+        #     for zi in range(iz-b,iz+b+1):
+        #         Temp[iTemp1,iTin] = BWTrueM[zi,xi]
+        #         iTin+=1                  
+        # for xi in range(ix-b,ix+b+1):                
+        #     for zi in range(iz-b,iz+b+1):
+        #         Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
+        #         iTin+=1         
 
     if not for_train:               
 
@@ -115,13 +115,13 @@ def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, Se
         if not for_train:
             freq = np.ceil(probs*(2**14)).astype('int')#+1
             freqlist = list(freq)   
-            freqstable.set_frequencies(freqlist)#arc.SimpleFrequencyTable(freqlist ) #arc.CheckedFrequencyTable(
-
+            # freqstable.set_frequencies(freqlist)#arc.SimpleFrequencyTable(freqlist ) #arc.CheckedFrequencyTable(
+            freqstable = arc.SimpleFrequencyTable(freqlist )
             if ENC:
-                #ac_model.encode_symbol(freqstable,symb)
-                ac_model.enc.update(freqstable,symb)
+                ac_model.encode_symbol(freqstable,symb)
+                # ac_model.enc.update(freqstable,symb)
             else:#DECODER
-                symb = ac_model.dec.read(freqstable)#ac_model.decode_symbol(freqstable)  
+                symb = ac_model.decode_symbol(freqstable)  
     
                 BWTrue[iz, ix] = symb
                 if symb:
@@ -369,11 +369,10 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch=0):
         return uctxs,counts
     
     
-def ENCODE_DECODE(ENC,bs_dir,nn_model,ori_level=0,GT=0):
+def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
     
     start = time.time()      
-    sess = tf1.Session()
-    sess.run(tf1.global_variables_initializer())
+
 
     nintbits = ori_level*np.ones((6,),int)
     lrGTs = dict()

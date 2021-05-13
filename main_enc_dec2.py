@@ -28,8 +28,8 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-from enc_functs_fast42d import ENCODE_DECODE
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+from enc_functs_fast43d import ENCODE_DECODE
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 sample = 'loot'#'redandblack'#'longdress'#'loot'
 ds = pc_ds(sample)
@@ -48,7 +48,7 @@ nlevel_down = 0
 # ori_level=10
 
 ########
-globz.batch_size = 10000#0000
+#globz.batch_size = 10000#0000
 
 #########
 ctx_type = 100
@@ -75,7 +75,8 @@ os.mkdir(bs_dir)
 
 
 nn_model = tfint10_3(ckpt_path)
-
+sess = tf1.Session()
+sess.run(tf1.global_variables_initializer())
 
 GT = pcread(filepath).astype('int')
 #%%#LOWER RES INPUT FOR DEBUGGING:
@@ -87,8 +88,8 @@ for il in range(nlevel_down):
 print('input level:'+str(ori_level))
 #%%###################################    
 # bs_dir = '/media/emre/Data/main_enc_dec/redandblack_20210430-184615/bss/'
-_,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ori_level,GT)
-dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ori_level)
+_,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,sess,ori_level,GT)
+dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,sess,ori_level)
 
 TP,FP,FN=compare_Locations(dec_GT,GT)
 

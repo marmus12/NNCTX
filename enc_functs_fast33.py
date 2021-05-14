@@ -7,17 +7,14 @@ Created on Mon Mar  1 15:36:29 2021
 """
 import numpy as np
 import sys
-from pcloud_functs import pcshow,pcread,lowerResolution,inds2vol,vol2inds,dilate_Loc
+from pcloud_functs import pcshow,lowerResolution,inds2vol,vol2inds,dilate_Loc
+from ac_functs import ac_model2
+from runlength import RLED
 sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
 from usefuls import in1d_index,plt_imshow,write_ints,read_ints,write_bits,read_bits,dec2bin2,bin2dec2,ints2bs,bs2ints
 import arithmeticcoding as arc
-import tensorflow.compat.v1 as tf1
-import globz
 import time
-from ac_functs import ac_model2
-# from dec2bin import dec2bin
-from runlength import RLED
-
+import globz
 
 def N_BackForth(sBBi): ##checked with matlab output
 
@@ -29,13 +26,13 @@ def N_BackForth(sBBi): ##checked with matlab output
     Points_parent,iC = np.unique(quotBB,return_inverse=True,axis=0)  #   % size of iC is (nBBx3)
 
     PatEl = np.array( [[0, 0, 0],
-                        [1, 0, 0],
-                        [0, 1, 0],
-                        [1, 1, 0],
-                        [0, 0, 1],
-                        [1, 0, 1],
-                        [0, 1, 1],
-                        [1, 1, 1]])
+                       [1, 0, 0],
+                       [0, 1, 0],
+                       [1, 1, 0],
+                       [0, 0, 1],
+                       [1, 0, 1],
+                       [0, 1, 1],
+                       [1, 1, 1]])
                        
 
     
@@ -50,140 +47,185 @@ def N_BackForth(sBBi): ##checked with matlab output
 
 
 
-def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM, ctx_type ,b,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None,for_train=False):
+def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM, ctx_type ,ENC=True,nn_model='dec',ac_model='dec_and_enc',Location='for_debug',sess=None,for_train=False):
 
-    # freqstable = arc.SimpleFrequencyTable([10,10] ) #arc.CheckedFrequencyTable(        
-    nT = StartStopLengthM[icPC,2]    
-    Temp = np.zeros((nT,ctx_type),'bool')
-    Tprobs = np.zeros((nT,2),'float')
+    # global esymbs,symbs
+
+    wsize = np.sqrt(ctx_type//4).astype(int)#np.sqrt((ctx_type+0.5)*2/5).astype(int)
+    b = (wsize-1)//2
+    
+    [ix1,iz1] = np.where(np.ones((wsize,wsize)))
+    
+    Tempaxa= [iz1-b,ix1-b]
+    T12size = wsize**2    
+    TCsize = (T12size-1)//2
+    # %%
+
+
+
+    # % Go over the possible points
+   
+    # TempCaus = [Tempaxa[0][0:TCsize],Tempaxa[1][0:TCsize]]
+    dispz = np.zeros((TCsize,),'int')
+    dispx = np.zeros((TCsize,),'int')
+    dispznc = np.zeros((TCsize+1,),'int')
+    dispxnc = np.zeros((TCsize+1,),'int')
+    for i1 in range( TCsize):
+
+        dispz[i1] = Tempaxa[0][i1]
+        dispx[i1] = Tempaxa[1][i1]
+        
+    for i1 in range( TCsize,T12size):
+        dispznc[i1-TCsize] = Tempaxa[0][i1]
+        dispxnc[i1-TCsize] = Tempaxa[1][i1]        
+    
+    
+    nT = StartStopLengthM[icPC,2]
+    if ENC:    
+        Temp = np.zeros((nT,ctx_type),'bool')
+        Tprobs = np.zeros((nT,2),'float')
     if for_train:
         Des = np.zeros((nT,),'int')
 
 
+    # iBBr_in=0
+    # Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
+    TCaus = np.zeros((TCsize,),'int')
+    TNCaus = np.zeros((TCsize+1,),'int')
+    # psymbs = []
+    if ENC or for_train:
+        iTemp1 = -1
+        for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
+            iz = globz.LocM[iBB,2]
+            ix = globz.LocM[iBB,0]
+    
+            Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
+            Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')            
+            Temp1M = BWTrue1M[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')        
 
-    # iTemp1 = -1
-    for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
-        iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
-        ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
-        #%%
-        Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+            
+            for i1 in range( TCsize):
+                TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
+            for i1 in range( TCsize+1):    
+                TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]
+                
+            iTemp1+=1                
+            Temp[iTemp1,0:T12size] = Temp2
+            Temp[iTemp1,T12size:2*T12size] = Temp1
+            Temp[iTemp1,2*T12size:(2*T12size+TCsize)] = TCaus
+            Temp[iTemp1,(2*T12size+TCsize):3*T12size] = TNCaus
+            Temp[iTemp1,3*T12size:ctx_type] = Temp1M
 
-        #%%
-        # z1 = iz-b
-        # x1 = ix-b
-        # z2 =iz+b+1
-        # x2 = ix+b+1
-        # Temp[iiBB,:] = np.stack((BWTrue2[z1:z2,x1:x2],BWTrue1[z1:z2,x1:x2],BWTrueM[z1:z2,x1:x2],BWTrue1M[z1:z2,x1:x2]),2).flatten('F')
-
-        #%%
-        # iTin = 0
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):        
-        #         if BWTrue2[zi,xi]:
-        #             Temp[iiBB,iTin] = 1
-        #             iTin+=1 
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):        
-        #         if BWTrue1[zi,xi]:
-        #             Temp[iiBB,iTin] = 1
-        #             iTin+=1         
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):        
-        #         if BWTrueM[zi,xi]:
-        #             Temp[iiBB,iTin] = 1
-        #             iTin+=1         
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):        
-        #         if BWTrue1M[zi,xi]:
-        #             Temp[iiBB,iTin] = 1
-        #             iTin+=1                     
-        #%%        
-        # iTemp1+=1   
-        # iTin = 0
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):
-        #         Temp[iiBB,iTin] = BWTrue2[zi,xi]
-        #         iTin+=1 
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):
-        #         Temp[iiBB,iTin] = BWTrue1[zi,xi]
-        #         iTin+=1  
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):
-        #         Temp[iiBB,iTin] = BWTrueM[zi,xi]
-        #         iTin+=1                  
-        # for xi in range(ix-b,ix+b+1):                
-        #     for zi in range(iz-b,iz+b+1):
-        #         Temp[iiBB,iTin] = BWTrue1M[zi,xi]
-        #         iTin+=1         
-        #%%
-    if not for_train:               
-
-        Tprobs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp})           
-
-    # iTemp = -1
+        if not for_train:        
+            Tprobs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp})    
+            # # nb = np.ceil(nT/globz.batch_size).astype('int')
+            # for ib in range(nb):
+            #     bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
+            #     # Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
+            #     Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = sess.run(nn_model.output,feed_dict={nn_model.input:bTemp})
+                                   
+    # if not ENC:
+    #     bTemp = np.zeros((globz.batch_size,ctx_type),'int')
+     
+    # if not for_train:
+    OneTemp = np.zeros((ctx_type,),'bool')
+    iTemp = -1
 ##########2nd loop##########################################
-    for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
-        # iTemp+=1
-        iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
-        ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
+    for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
+        iTemp+=1
+        iz = globz.LocM[iBB,2]
+        ix = globz.LocM[iBB,0]
         
+        if not ENC:
 
+            Temp2 = BWTrue2[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F') #(2b+1)**2
+            Temp1 = BWTrue1[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')
+            Temp1M = BWTrue1M[(iz-b):(iz+b+1),(ix-b):(ix+b+1)].flatten('F')  
+            
+            for i1 in range( TCsize):
+                TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
+            for i1 in range( TCsize+1):    
+                TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]    
+                            
+            # Temp[iTemp,0:T12size] = Temp2
+            # Temp[iTemp,T12size:2*T12size] = Temp1
+            # Temp[iTemp,2*T12size:(2*T12size+TCsize)] = TCaus
+            # Temp[iTemp,(2*T12size+TCsize):3*T12size] = TNCaus
+            # Temp[iTemp,3*T12size:ctx_type] = Temp1M 
+            OneTemp[0:T12size] = Temp2
+            OneTemp[T12size:2*T12size]=Temp1
+            OneTemp[2*T12size:(2*T12size+TCsize)] = TCaus
+            OneTemp[(2*T12size+TCsize):3*T12size] = TNCaus
+            OneTemp[3*T12size:]=Temp1M
+            
         if for_train:
-            Des[iiBB] = BWTrue[iz, ix]
+            Des[iTemp] = BWTrue[iz, ix]
             
         if ENC and not for_train:
             symb = BWTrue[iz, ix]#= Des[iTemp]
+                        
+        # if ENC or for_train:
+        #     Des[iTemp] = BWTrue[iz, ix]
             
-        probs = Tprobs[iiBB,:]
-
+        # if ENC and not for_train :
+            # symb = Des[iTemp]
+        if ENC:
+            probs = Tprobs[iTemp,:]
+        
+        else: #DECODER
+    
+            probs = sess.run(nn_model.output,feed_dict={nn_model.input: OneTemp[np.newaxis,:]})[0,:]
+        
         if not for_train:
             freq = np.ceil(probs*(2**14)).astype('int')#+1
-            freqlist = list(freq)   
-            # freqstable.set_frequencies(freqlist)#arc.SimpleFrequencyTable(freqlist ) #arc.CheckedFrequencyTable(
-            freqstable = arc.SimpleFrequencyTable(freqlist )
+            freqlist = list(freq)
+    
+                
+            freqs = arc.SimpleFrequencyTable(freqlist )
+     
+         
+            
             if ENC:
-                ac_model.encode_symbol(freqstable,symb)
-                # ac_model.enc.update(freqstable,symb)
+                ac_model.encode_symbol(freqs,symb)
+    
+    
             else:#DECODER
-                symb = ac_model.decode_symbol(freqstable)  
+                symb = ac_model.decode_symbol(freqs)  
     
                 BWTrue[iz, ix] = symb
                 if symb:
                     
                     globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
+                    
+    
                     globz.iBBr +=1
                 
+            # globz.isymb +=1      
+        #############################3
+    # if not ENC:
 
-        
-
+    #     Des = 0
     if for_train:
         return Temp,Des
-
-def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,for_train=False,bs_dir=None,save_SSL=True,level=0,ori_level=0,dSSLs=0):
-
+    
+def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,bs_dir='',save_SSL=True,level=0,ori_level=0,dSSLs=None,for_train=False):
 
     # gtLoc = np.copy(Loc)
-    wsize = np.sqrt(ctx_type//4).astype(int)
-    b = (wsize-1)//2
-    
+        
     maxX = maxesL[0]  
     maxY = maxesL[1]
     maxZ = maxesL[2]
 
-
+    lSSL = maxY+10
 
     SectSize = (maxZ,maxX)
 
-    # %% Find sections in Loc
-    lSSL = maxY+10
-    StartStopLength = np.zeros((lSSL ,3),dtype='int')    
     
+    
+    # %% Find sections in Loc
+    StartStopLength = np.zeros((lSSL,3),dtype='int')    
     if ENC:
-
+        #TODO: write to file:maxH,nrPC,ncPC,icPC0
         icPC = globz.Loc[0,1]    
         StartStopLength[icPC,0] = 0
         for iBB in range(globz.Loc.shape[0]):#= 1:(size(Loc,1))
@@ -198,37 +240,24 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             StartStopLength[icPC,1] = iBB-1
             StartStopLength[icPC,2] = StartStopLength[icPC,1]-StartStopLength[icPC,0]+1
 
-        # ncPC = icPC
+        ncPC = np.copy(icPC)
         SSL2 = StartStopLength[:,2]>0
-        # np.save(bs_dir+'SSL'+str(level)+'.npy',{'SSL':SSL2,'ncPC':ncPC})
-        
+        # np.save('SSL2.npy',{'SSL2':SSL2,'ncPC':ncPC})
         if level==ori_level:
 
             ssbits = ''
             for ssbit in SSL2:
                 ssbits=ssbits+str(int(ssbit))
-            
-    
 
-            # ssbits = ssbits + '1'           
-            # write_bits(ssbits,bs_dir+'SSL.dat')
-            
             RLED(ssbits[32:-9],lSSL-41,lSSL-41,1,bs_dir+'rSSL.dat')
-            
     else:    
         
-        # ssbits = read_bits(bs_dir+'SSL'+str(level)+'.dat')    
-        # ncPC = bin2dec2(ssbits[0:(level+2)])+16
-        # SSL2 = np.zeros((maxY+10,),dtype='bool')    
-        # for ib,ssbit in enumerate(ssbits[(level+2):(-1)]):
-        #     SSL2[ib] = bool(int(ssbit))
-        
         SSL2 = dSSLs[level,:]
-        
-        
-        
+    
     ncPC = np.max(np.where(SSL2)[0])
-
+    #     infodict = np.load('SSL2.npy',allow_pickle=True)[()]
+    #     ncPC = infodict['ncPC'][()]
+    #     SSL2 = infodict['SSL2']
     # %% Find sections in LocM
     
 
@@ -280,7 +309,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             
             
                         # %% 0. Mark the TRUE points on BWTrue
-            BWTrue = np.zeros( SectSize,'int')     
+            BWTrue = np.zeros( SectSize,'bool')     
             if ENC:
                 for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):    
                     BWTrue[globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
@@ -301,34 +330,28 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
                         BWTrue2[globz.Loc[iBB,2], globz.Loc[iBB,0] ] = 1
 
             BWTrue1M = np.zeros( SectSize,'bool')
-            # SLoc1M = np.zeros((StartStopLengthM[icPC+1,2],2),'int')
             if(icPC < ncPC):
                 if( StartStopLengthM[icPC+1,1] > 0 ):
                     for iBB in range(StartStopLengthM[icPC+1,0],StartStopLengthM[icPC+1,1]+1):
-                        
-                            iz,ix = globz.LocM[iBB,2], globz.LocM[iBB,0]
-                            # SLoc1M[t,:] =  iz,ix
-                            BWTrue1M[ iz,ix] = 1
-                            
+
+                            BWTrue1M[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
+
 
             BWTrueM = np.zeros( SectSize,'bool')
-            SLocM = np.zeros((StartStopLengthM[icPC,2],2),'int')
             if( StartStopLengthM[icPC,1] > 0 ):
-                for t,iBB in enumerate(range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
-                    
-                    iz,ix = globz.LocM[iBB,2], globz.LocM[iBB,0]
-                    SLocM[t,:] =  iz,ix
-                    BWTrueM[ iz,ix] = 1
+                for iBB in range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
+                    # try:
+                    BWTrueM[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
             
             iBBr_prev = globz.iBBr
             if for_train:
-                Temp, Des = OneSectOctMask2(SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,b,ENC,nn_model,ac_model,sess=sess,for_train=for_train)              
+                Temp, Des = OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model,sess=sess,for_train=for_train)              
                 Temps[ iTT:(iTT+Temp.shape[0]),:]  = Temp
                 Dests[ iTT:(iTT+Temp.shape[0])]  = Des    
                 iTT = iTT+Temp.shape[0]
 
             else:
-                OneSectOctMask2(SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,b,ENC,nn_model,ac_model,sess=sess)              
+                OneSectOctMask2(icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize, StartStopLengthM,ctx_type,ENC,nn_model,ac_model,sess=sess)              
 
             iBBr_now = globz.iBBr
             # if ENC:   
@@ -349,8 +372,8 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     if ENC and not for_train:        
 
         freqlist = [10,10]
-        freqs = arc.SimpleFrequencyTable(freqlist ) #arc.CheckedFrequencyTable(
-        for i_s in range(64):
+        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        for i_s in range(32):
             ac_model.encode_symbol(freqs,0)
         
         dec_Loc = 0
@@ -364,7 +387,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     
         
 
-def get_uctxs_counts2(GT,ctx_type,do_try_catch=0):
+def get_uctxs_counts2(GT,ctx_type,do_try_catch):
 
 
     
@@ -392,11 +415,10 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch=0):
             symb = int(DesT[i1])
             counts[ic[i1],symb]=counts[ic[i1],symb]+1
     
-    
 
         return uctxs,counts
     
-    
+ 
 def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
     
     start = time.time()      
@@ -529,7 +551,8 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
         dec_GT = 0
     
     return dec_GT,time_spent
-        
+    
+
     
 
       

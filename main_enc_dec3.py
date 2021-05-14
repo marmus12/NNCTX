@@ -28,14 +28,15 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-from enc_functs_fast43d import ENCODE_DECODE
+enc_functs_file = 'enc_functs_fast43d'
 
-decode=1
+
+decode=0
 #os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-continu = 0
+continu = 1
 if continu:
-    prev_dir = '/media/emre/Data/main_enc_dec3/loot_20210511-125149/'
-    i_start = 242
+    prev_dir = '/media/emre/Data/main_enc_dec3/ricardo10_20210514-150813/'
+    i_start = 47
 else:
     i_start = 0
 sample = 'ricardo10'#'redandblack'#'longdress'#'loot'
@@ -45,7 +46,7 @@ ds = pc_ds(sample)
 #########
 ori_level = ds.bitdepth
 
-filepaths = ds.filepaths
+filepaths = ds.filepaths#[0:10]
 
 ########
 # globz.batch_size = 10000#0000
@@ -58,6 +59,8 @@ log_id = '20210421-180239'#'20210409-225535'#'20210415-222905'#
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 
 #################################################################
+exec('from '+ enc_functs_file +' import ENCODE_DECODE')
+working_dir = os.getcwd()+'/'
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 output_root = '/media/emre/Data/main_enc_dec3/'
 if ds.body=='upper':
@@ -70,6 +73,8 @@ else:
     os.mkdir(output_dir)
 curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
 copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])     
+copyfile(working_dir+enc_functs_file+'.py',output_dir + curr_date + "__" + enc_functs_file+'.py')  
+  
 root_bs_dir = output_dir + 'bss/'
 if not continu:
     os.mkdir(root_bs_dir)

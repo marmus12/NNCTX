@@ -207,10 +207,7 @@ def asvoid(arr):
     the entire row.
     http://stackoverflow.com/a/16840350/190597 (Jaime, 2013-05)
     Warning: When using asvoid for comparison, note that float zeros may compare UNEQUALLY
-    >>> asvoid([-0.]) == asvoid([0.])def show_time_spent(time_spent):
-    nmins = int(time_spent//60)
-    nsecs = int(np.round(time_spent-nmins*60))
-    print('time spent:' + str(np.round(time_spent,2)))
+    >>> asvoid([-0.]) == asvoid([0.])
     array([False], dtype=bool)
     """
     arr = np.ascontiguousarray(arr)

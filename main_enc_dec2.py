@@ -28,10 +28,10 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-from enc_functs_fast43d import ENCODE_DECODE
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+from enc_functs_fast33 import ENCODE_DECODE
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-sample = 'loot'#'redandblack'#'longdress'#'loot'
+sample = 'ricardo10'#'redandblack'#'longdress'#'loot'
 ds = pc_ds(sample)
 ori_level = ds.bitdepth
 ifile=0

@@ -28,9 +28,9 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-enc_functs_file = 'enc_functs_fast33'
-GPU=0
-fast_model=0
+# enc_functs_file = 'enc_functs_fast35'
+GPU=1
+fast_model=1
 decode=1
 #
 continu = 0
@@ -39,11 +39,11 @@ if continu:
     i_start = 47
 else:
     i_start = 0
-sample = 'loot'#'redandblack'#'longdress'#'loot'
+sample = 'phil9'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 
-ori_level = 4#ds.bitdepth
+ori_level = ds.bitdepth
 
 filepaths = ds.filepaths#[0:10]
 
@@ -55,16 +55,17 @@ if not GPU:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 ctx_type = 100
 if fast_model:
-    from enc_functs_fast43d import ENCODE_DECODE
+    enc_functs_file = 'enc_functs_fast44d'
     log_id = '20210421-180239'
 else:
-    from enc_functs_fast33 import ENCODE_DECODE
+    enc_functs_file = 'enc_functs_fast35'
     log_id = '20210409-225535'#'20210415-222905'#
-
+    
+exec('from '+ enc_functs_file +' import ENCODE_DECODE')
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 
 #################################################################
-exec('from '+ enc_functs_file +' import ENCODE_DECODE')
+# exec('from '+ enc_functs_file +' import ENCODE_DECODE')
 working_dir = os.getcwd()+'/'
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 output_root = '/media/emre/Data/main_enc_dec3/'
@@ -104,19 +105,26 @@ for ifile,filepath in enumerate(filepaths):
         condition_on_ifile = True
         
     if condition_on_ifile:
+        
+        
         iframe = ds.ifile2iframe(ifile)
         # assert (iframe in filepath)
         
         bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
+        
+        acbspath = bs_dir+'AC.dat'
+        
         os.mkdir(bs_dir)
         GT = pcread(filepath).astype('int')
         if ori_level<ds.bitdepth:
             for il in range(ds.bitdepth-ori_level):
                 GT = lowerResolution(GT)
-        #%%###################################    
-        _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,sess,ori_level,GT)
+        #%%###################################
+        ac_model = ac_model2(2,acbspath,1)
+        _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ac_model,sess,ori_level,GT)
         if decode:
-            dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,sess,ori_level)      
+            ac_model = ac_model2(2,acbspath,0)
+            dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ac_model,sess,ori_level)      
             TP,FP,FN=compare_Locations(dec_GT,GT)
             assert(FP.shape[0]==0)
             assert(FN.shape[0]==0)
@@ -128,7 +136,8 @@ for ifile,filepath in enumerate(filepaths):
         bpv = CL/npts
         bpvs[ifile]=bpv
         print('iframe: ' +iframe+' bpv: '+str(bpv))
-        
+        ave_bpv = np.mean(bpvs[i_start:(ifile+1)])
+        print('ave. bpv up to now: '+str(ave_bpv))
         
         times[ifile,0]= int(time_spente)
         

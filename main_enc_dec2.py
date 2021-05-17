@@ -28,8 +28,10 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-fast_model=0
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+fast_model=1
+# if not fast_model:
+#      globz.batch_size = 10000
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 sample = 'thaidancer'#'redandblack'#'longdress'#'loot'
 ds = pc_ds(sample)
@@ -51,12 +53,12 @@ nlevel_down = 0
 ctx_type = 100
 
 if fast_model:
-    from enc_functs_fast43d import ENCODE_DECODE
+    from enc_functs_fast44d import ENCODE_DECODE
     log_id = '20210421-180239'
 else:
-    from enc_functs_fast33 import ENCODE_DECODE
+    from enc_functs_fast35 import ENCODE_DECODE
     log_id = '20210409-225535'#'20210415-222905'#
-
+    
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 
 #################################################################
@@ -90,7 +92,9 @@ for il in range(nlevel_down):
 print('input level:'+str(ori_level))
 #%%###################################    
 # bs_dir = '/media/emre/Data/main_enc_dec/redandblack_20210430-184615/bss/'
-_,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,sess,ori_level,GT)
+acbspath = bs_dir+'AC.dat'
+ac_model = ac_model2(2,acbspath,1)
+_,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ac_model,sess,ori_level,GT)
 npts = GT.shape[0]
 
 CL = get_dir_size(bs_dir)
@@ -100,7 +104,8 @@ print('bpv: '+str(bpv))
 print('sample:'+str(sample))
 print('input level:'+str(ori_level))
 
-dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,sess,ori_level)
+ac_model = ac_model2(2,acbspath,0)
+dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ac_model,sess,ori_level)
 
 TP,FP,FN=compare_Locations(dec_GT,GT)
 

@@ -370,13 +370,14 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
 
                      
 
-    if ENC and not for_train:        
+    if ENC and level==ori_level and not for_train:        
 
         freqlist = [10,10]
         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
         for i_s in range(64):
             ac_model.encode_symbol(freqs,0)
-        
+    
+    if ENC:
         dec_Loc = 0
     if not(ENC) and not(for_train):
         dec_Loc =  globz.Loc[0:iBBr_now,:]
@@ -420,7 +421,7 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch):
         return uctxs,counts
     
  
-def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
+def ENCODE_DECODE(ENC,bs_dir,nn_model,ac_model,sess,ori_level=0,GT=0):
     
     start = time.time()      
 
@@ -501,8 +502,7 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
         
         # globz.isymb = 0
         globz.iBBr = 0
-        bspath = bs_dir+'level'+str(level)+'.dat'
-        ac_model = ac_model2(2,bspath,ENC)
+
         
         if ENC: #or debug_dec:
             mins1 = np.min(lrGTs[level] ,0)
@@ -536,8 +536,8 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
             lrGTs[level] = dec_Loc+mins1-32
     
     
-        if ENC:
-            ac_model.end_encoding()
+    if ENC:
+        ac_model.end_encoding()
     
     end = time.time()
     time_spent = end - start

@@ -15,7 +15,6 @@ from usefuls import in1d_index,plt_imshow,write_ints,read_ints,write_bits,read_b
 import arithmeticcoding as arc
 import time
 import globz
-
 def N_BackForth(sBBi): ##checked with matlab output
 
 # %% Move from current resolution one level down and then one up
@@ -125,12 +124,12 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
                     iTin+=1     
 
         if not for_train:               
-            # nb = np.ceil(nT/globz.batch_size).astype('int')
-            # for ib in range(nb):
-            #     bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
-            #     # Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
-            #     Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = sess.run(nn_model.output,feed_dict={nn_model.input:bTemp})
-            Tprobs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp})                                    
+            nb = np.ceil(nT/globz.batch_size).astype('int')
+            for ib in range(nb):
+                bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
+                # Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
+                Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = sess.run(nn_model.output,feed_dict={nn_model.input:bTemp})
+                                   
     # if not ENC:
     #     bTemp = np.zeros((globz.batch_size,ctx_type),'int')
      
@@ -142,39 +141,39 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
         iz = globz.LocM[iBB,2]
         ix = globz.LocM[iBB,0]
         
-        # if not ENC:
+        if not ENC:
 
-        iTin = 0
-        for xi in range(ix-b,ix+b+1):                    
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp,iTin] = BWTrue2[zi,xi]
-                iTin+=1 
-        for xi in range(ix-b,ix+b+1):                    
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp,iTin] = BWTrue1[zi,xi]
-                iTin+=1  
-
-
-        for i1 in range( TCsize):
-            TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
-        for i1 in range( TCsize+1):    
-            TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]
-
-        Temp[iTemp,2*T12size:(2*T12size+TCsize)] = TCaus
-        Temp[iTemp,(2*T12size+TCsize):3*T12size] = TNCaus
-        # Temp[iTemp1,3*T12size:ctx_type] = Temp1M
-        iTin = 3*T12size
-        for xi in range(ix-b,ix+b+1):                    
-            for zi in range(iz-b,iz+b+1):
-                Temp[iTemp,iTin] = BWTrue1M[zi,xi]
-                iTin+=1              
+            iTin = 0
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp,iTin] = BWTrue2[zi,xi]
+                    iTin+=1 
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp,iTin] = BWTrue1[zi,xi]
+                    iTin+=1  
+    
+    
+            for i1 in range( TCsize):
+                TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
+            for i1 in range( TCsize+1):    
+                TNCaus[i1] = BWTrueM[iz+dispznc[i1], ix+dispxnc[i1]]
+    
+            Temp[iTemp,2*T12size:(2*T12size+TCsize)] = TCaus
+            Temp[iTemp,(2*T12size+TCsize):3*T12size] = TNCaus
+            # Temp[iTemp1,3*T12size:ctx_type] = Temp1M
+            iTin = 3*T12size
+            for xi in range(ix-b,ix+b+1):                    
+                for zi in range(iz-b,iz+b+1):
+                    Temp[iTemp,iTin] = BWTrue1M[zi,xi]
+                    iTin+=1              
 
             
-        if for_train:
+        if ENC or for_train:
             Des[iTemp] = BWTrue[iz, ix]
             
         if ENC and not for_train :
-            symb = BWTrue[iz, ix]
+            symb = Des[iTemp]
             probs = Tprobs[iTemp,:]
         if not ENC: #DECODER
     
@@ -211,25 +210,27 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
     #     Des = 0
     if for_train:
         return Temp.astype('bool'),Des
-    
-def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,bs_dir='',save_SSL=True,level=0,ori_level=0,dSSLs=None,for_train=False):
 
+# dec_Loc= get_temps_dests2(nn_model.ctx_type,ENC,nn_model = nn_model,ac_model=ac_model,maxesL = maxesL,sess=sess,bs_dir=bs_dir,save_SSL=True,level=level,ori_level=ori_level,dSSLs=dSSLs)
+
+def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',maxesL='dec_and_enc',sess=None,bs_dir='',save_SSL=True,level=0,ori_level=0,dSSLs=None,for_train=False):
     # gtLoc = np.copy(Loc)
         
     maxX = maxesL[0]  
     maxY = maxesL[1]
     maxZ = maxesL[2]
 
-    lSSL = maxY+10
+
 
     SectSize = (maxZ,maxX)
+        #maxH,nrPC = SectSize
 
     
     
     # %% Find sections in Loc
-    StartStopLength = np.zeros((lSSL,3),dtype='int')    
+    StartStopLength = np.zeros((maxY+10,3),dtype='int')    
     if ENC:
-     
+        #TODO: write to file:maxH,nrPC,ncPC,icPC0
         icPC = globz.Loc[0,1]    
         StartStopLength[icPC,0] = 0
         for iBB in range(globz.Loc.shape[0]):#= 1:(size(Loc,1))
@@ -246,26 +247,16 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
 
         ncPC = np.copy(icPC)
         SSL2 = StartStopLength[:,2]>0
-        # np.save('SSL2.npy',{'SSL2':SSL2,'ncPC':ncPC})
-        if level==ori_level:
-
-            ssbits = ''
-            for ssbit in SSL2:
-                ssbits=ssbits+str(int(ssbit))
-
-            RLED(ssbits[32:-9],lSSL-41,lSSL-41,1,bs_dir+'rSSL.dat')
+        np.save('SSL2.npy',{'SSL2':SSL2,'ncPC':ncPC})
     else:    
         
-        SSL2 = dSSLs[level,:]
-    
-    ncPC = np.max(np.where(SSL2)[0])
-    #     infodict = np.load('SSL2.npy',allow_pickle=True)[()]
-    #     ncPC = infodict['ncPC'][()]
-    #     SSL2 = infodict['SSL2']
+        infodict = np.load('SSL2.npy',allow_pickle=True)[()]
+        ncPC = infodict['ncPC'][()]
+        SSL2 = infodict['SSL2']
     # %% Find sections in LocM
     
 
-    StartStopLengthM = np.zeros((lSSL,3),'int')
+    StartStopLengthM = np.zeros((maxY+10,3),'int')
     icPC = globz.LocM[0,1]
     StartStopLengthM[icPC,0] = 0
     for iBB in range(globz.LocM.shape[0]):
@@ -280,7 +271,10 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
         StartStopLengthM[icPC,1] = iBB-1
         StartStopLengthM[icPC,2] = StartStopLengthM[icPC,1]-StartStopLengthM[icPC,0]+1
 
+    
 
+    
+    
     # %%
     # nM = np.max(LocM[:,1])
     nM7 = globz.LocM.shape[0]
@@ -310,35 +304,37 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
             
             
                         # %% 0. Mark the TRUE points on BWTrue
-            BWTrue = np.zeros( SectSize,'bool')     
+            BWTrue = np.zeros( SectSize,'int')     
             if ENC:
                 for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):    
                     BWTrue[globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
         
             # %% 0.1 Mark the PREVIOUS SECTION TRUE points on BWTrue
             
-            BWTrue1 = np.zeros( SectSize,'bool')
+            BWTrue1 = np.zeros( SectSize,'int')
             if(icPC > 0):
                 if( StartStopLength[icPC-1,1] > 0 ):
                     for iBB in range(StartStopLength[icPC-1,0],StartStopLength[icPC-1,1]+1):
                         BWTrue1[ globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
             # %% 0.2 Mark the PREVIOUS_PREVIOUS SECTION TRUE points on BWTrue
             
-            BWTrue2 = np.zeros( SectSize,'bool')
+            BWTrue2 = np.zeros( SectSize,'int')
             if(icPC > 1):
                 if( StartStopLength[icPC-2,0] > 0 ):
                     for iBB in range(StartStopLength[icPC-2,0],StartStopLength[icPC-2,1]+1):
                         BWTrue2[globz.Loc[iBB,2], globz.Loc[iBB,0] ] = 1
 
-            BWTrue1M = np.zeros( SectSize,'bool')
+            BWTrue1M = np.zeros( SectSize,'int')
             if(icPC < ncPC):
                 if( StartStopLengthM[icPC+1,1] > 0 ):
                     for iBB in range(StartStopLengthM[icPC+1,0],StartStopLengthM[icPC+1,1]+1):
-
+                        # try:
                             BWTrue1M[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
+                        # except:
+                        #     fdgsd=5
+                                
 
-
-            BWTrueM = np.zeros( SectSize,'bool')
+            BWTrueM = np.zeros( SectSize,'int')
             if( StartStopLengthM[icPC,1] > 0 ):
                 for iBB in range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
                     # try:
@@ -374,7 +370,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
 
         freqlist = [10,10]
         freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
-        for i_s in range(64):
+        for i_s in range(32):
             ac_model.encode_symbol(freqs,0)
         
         dec_Loc = 0
@@ -417,9 +413,9 @@ def get_uctxs_counts2(GT,ctx_type,do_try_catch):
             counts[ic[i1],symb]=counts[ic[i1],symb]+1
     
 
+        
         return uctxs,counts
-    
- 
+
 def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
     
     start = time.time()      
@@ -552,6 +548,8 @@ def ENCODE_DECODE(ENC,bs_dir,nn_model,sess,ori_level=0,GT=0):
         dec_GT = 0
     
     return dec_GT,time_spent
+    
+    
     
 
     

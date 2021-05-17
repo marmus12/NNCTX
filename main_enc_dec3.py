@@ -28,33 +28,38 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-enc_functs_file = 'enc_functs_fast43d'
-
-
-decode=0
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-continu = 1
+enc_functs_file = 'enc_functs_fast33'
+GPU=0
+fast_model=0
+decode=1
+#
+continu = 0
 if continu:
     prev_dir = '/media/emre/Data/main_enc_dec3/ricardo10_20210514-150813/'
     i_start = 47
 else:
     i_start = 0
-sample = 'ricardo10'#'redandblack'#'longdress'#'loot'
+sample = 'loot'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 
-#########
-ori_level = ds.bitdepth
+ori_level = 4#ds.bitdepth
 
 filepaths = ds.filepaths#[0:10]
 
 ########
 # globz.batch_size = 10000#0000
 
-#########
+#%%########
+if not GPU:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 ctx_type = 100
-
-log_id = '20210421-180239'#'20210409-225535'#'20210415-222905'#
+if fast_model:
+    from enc_functs_fast43d import ENCODE_DECODE
+    log_id = '20210421-180239'
+else:
+    from enc_functs_fast33 import ENCODE_DECODE
+    log_id = '20210409-225535'#'20210415-222905'#
 
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 
@@ -100,12 +105,14 @@ for ifile,filepath in enumerate(filepaths):
         
     if condition_on_ifile:
         iframe = ds.ifile2iframe(ifile)
-        assert (iframe in filepath)
+        # assert (iframe in filepath)
         
         bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
         os.mkdir(bs_dir)
         GT = pcread(filepath).astype('int')
-
+        if ori_level<ds.bitdepth:
+            for il in range(ds.bitdepth-ori_level):
+                GT = lowerResolution(GT)
         #%%###################################    
         _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,sess,ori_level,GT)
         if decode:

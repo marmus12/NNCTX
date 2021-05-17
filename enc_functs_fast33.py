@@ -225,7 +225,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     # %% Find sections in Loc
     StartStopLength = np.zeros((lSSL,3),dtype='int')    
     if ENC:
-        #TODO: write to file:maxH,nrPC,ncPC,icPC0
+     
         icPC = globz.Loc[0,1]    
         StartStopLength[icPC,0] = 0
         for iBB in range(globz.Loc.shape[0]):#= 1:(size(Loc,1))

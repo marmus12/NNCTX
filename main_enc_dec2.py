@@ -14,7 +14,7 @@ import os, sys
 import h5py
 
 import tensorflow.compat.v1 as tf1
-from models import tfint10_2,tfint10_3
+from models import tfint10_2,tfint10_3,tfint10_3A
 from ac_functs import ac_model2
 from usefuls import show_time_spent,compare_Locations,plt_imshow,write_bits,read_bits,write_ints,read_ints,get_dir_size
 import time
@@ -29,16 +29,16 @@ from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 fast_model=1
+Amodel = 1
 # if not fast_model:
 #      globz.batch_size = 10000
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-sample = 'thaidancer'#'redandblack'#'longdress'#'loot'
-ds = pc_ds(sample)
-ori_level = ds.bitdepth
-ifile=0
-filepath = ds.filepaths[ifile]
-
+GPU = 0
+decode=1
+# sample = 'thaidancer'#'redandblack'#'longdress'#'loot'
+# ds = pc_ds(sample)
+ori_level = 10#ds.bitdepth
+filepath = '/media/emre/Data/DATA/loot/loot/Ply/loot_vox10_1000.ply'
+assert(str(ori_level) in filepath)
 nlevel_down = 0
 #%%
 # sample = 'Thaidancer'
@@ -50,16 +50,27 @@ nlevel_down = 0
 # ori_level=10
 
 #########
-ctx_type = 100
 
-if fast_model:
+
+ctx_type = 100
+if not GPU:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+if fast_model and not Amodel:
     from enc_functs_fast44d import ENCODE_DECODE
     log_id = '20210421-180239'
+    ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
+    nn_model = tfint10_3(ckpt_path)
+elif fast_model and Amodel:
+    from enc_functs_fast45A import ENCODE_DECODE
+    log_id = '20210527-075818'#'20210526-212907'   
+    ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
+    nn_model = tfint10_3A(ckpt_path)
 else:
     from enc_functs_fast35 import ENCODE_DECODE
     log_id = '20210409-225535'#'20210415-222905'#
+    ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
+    nn_model = tfint10_3(ckpt_path)
     
-ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 
 #################################################################
 PCC_Data_Dir ='/media/emre/Data/DATA/'
@@ -68,7 +79,7 @@ output_root = '/media/emre/Data/main_enc_dec/'
 #     assert(str(ori_level) in sample)
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
 # if ENC:
-output_dir = output_root + sample +'_' + curr_date + '/'
+output_dir = output_root + curr_date + '/'
 os.mkdir(output_dir)
 curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
 copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])     
@@ -78,7 +89,7 @@ os.mkdir(bs_dir)
 # print(bs_dir)
 
 
-nn_model = tfint10_3(ckpt_path)
+
 sess = tf1.Session()
 sess.run(tf1.global_variables_initializer())
 
@@ -101,24 +112,26 @@ CL = get_dir_size(bs_dir)
 bpv = CL/npts
 # bpvs[ifile]=bpv
 print('bpv: '+str(bpv))
-print('sample:'+str(sample))
+print('filepath:'+filepath)
 print('input level:'+str(ori_level))
 
-ac_model = ac_model2(2,acbspath,0)
-dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ac_model,sess,ori_level)
-
-TP,FP,FN=compare_Locations(dec_GT,GT)
-
-print('bpv: '+str(bpv))
-print('sample:'+str(sample))
-print('input level:'+str(ori_level))
-
+if decode:
+    ac_model = ac_model2(2,acbspath,0)
+    dec_GT,time_spentd = ENCODE_DECODE(0,bs_dir,nn_model,ac_model,sess,ori_level)
+    
+    TP,FP,FN=compare_Locations(dec_GT,GT)
+    
+    print('bpv: '+str(bpv))
+    print('filepath:'+filepath)
+    print('input level:'+str(ori_level))
+    print('dec:')
+    show_time_spent(time_spentd)
 
 
 print('enc:')
 show_time_spent(time_spente)
-print('dec:')
-show_time_spent(time_spentd)
+
+
 
 # time_spent = end - start
 # time_spents[ifile] = int(time_spent)

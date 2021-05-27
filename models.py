@@ -10,6 +10,8 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import backend as K
 import numpy as np
+
+# import tensorflow.compat.v1.nn.matmul as mm
 # class fc_residual_layer(layers.Layer):
 #     def __init__(self, units, input_dim):
 #         super(Linear, self).__init__()
@@ -132,7 +134,7 @@ class MyModel6():
 
         # Can you guess what the current output shape is at this point? Probably not.
         # Let's just print it:
-        self.model.summary()        
+        self.model.sutf1.matmulary()        
        
     
 class MyModel7():
@@ -148,7 +150,7 @@ class MyModel7():
 
         # Can you guess what the current output shape is at this point? Probably not.
         # Let's just print it:
-        self.model.summary()          
+        self.model.sutf1.matmulary()          
    
      
 class MyModel8():
@@ -164,7 +166,7 @@ class MyModel8():
 
         # Can you guess what the current output shape is at this point? Probably not.
         # Let's just print it:
-        self.model.summary()            
+        self.model.sutf1.matmulary()            
         
         
 class MyModel9():
@@ -362,8 +364,83 @@ class tfModel11():
         self.w2 = tf1.Variable(xinitializer(shape=(self.n_latent,2))) 
         self.b2 = tf1.Variable(zinitializer(shape=(2,))) 
         self.output = tf1.nn.softmax(tf1.matmul(self.o1,self.w2)+self.b2)        
+
+
+class tfModel10A():
+    
+    def __init__(self,ctx_type):
+        tf1.disable_eager_execution()
+        xinitializer = keras.initializers.GlorotUniform()
+        zinitializer = keras.initializers.zeros()
+        self.input = tf1.placeholder(dtype='float',shape=[None,ctx_type])
         
+        self.w1 = tf1.Variable(xinitializer(shape=(ctx_type,2*ctx_type))) 
+        self.b1 = tf1.Variable(zinitializer(shape=(2*ctx_type,))) 
+        self.o1 = tf1.nn.relu((tf1.matmul(self.input,self.w1)+self.b1))
+
+        self.w2s = []
+        self.b2s = []
+        # self.outputs = tf1.Variable(
+        for ia in range(8):
+            self.w2s.append( tf1.Variable(xinitializer(shape=(2*ctx_type,2))) )
+            self.b2s.append(tf1.Variable(zinitializer(shape=(2,))) )
+        outs = []
+        for ia in range(8):
+            outs.append(tf1.nn.softmax(tf1.matmul(self.o1,self.w2s[ia])+self.b2s[ia]))
+
+        self.outputs = tf1.concat( outs,axis=1)        
         
+            # self.outputs[:,2*ia+1] = tf1.nn.softmax(mm(self.o1,self.w2s[ia])+self.b2s[ia]))
+class tfint10_3A():
+    
+    def __init__(self,ckpt_path,M=14,Ne=10):
+        ori_weights = np.load(ckpt_path,allow_pickle=True)[()]
+        w1 = ori_weights[0]
+        b1 = ori_weights[1]
+        w2s=[]
+        b2s=[]
+        for ia in range(8):
+            w2s.append(ori_weights[2+2*ia])
+            b2s.append(ori_weights[3+2*ia])
+        self.ctx_type = w1.shape[0]        
+        
+        C1 = 2**Ne/np.max((np.max(w1),np.max(b1)))
+        C2s=[]
+        for ia in range(8):
+            C2s.append(2**Ne/np.max((np.max(w2s[ia]),np.max(b2s[ia]))))
+        
+        intw1 = np.round(w1*C1).astype('int')
+        intb1 = np.round(b1*C1).astype('int')
+        
+        intw2s=[]
+        intb2s=[]
+        for ia in range(8):
+            intw2s.append(np.round(w2s[ia]*C2s[ia]).astype('int'))
+            intb2s.append( (2**M)*np.round(b2s[ia]*C2s[ia]).astype('int'))
+        
+        # intwlist = [intw1,intb1,intw2,intb2]    
+        tf1.disable_eager_execution()
+        self.input = tf1.placeholder(dtype='int64',shape=[None,self.ctx_type])
+
+        self.w1 = tf1.Variable(intw1,dtype='int64')
+        self.b1 = tf1.Variable(intb1,dtype='int64') 
+        
+        self.o1 = tf1.nn.relu((tf1.matmul(self.input,self.w1)+self.b1)/C1)
+        self.o2 = tf1.cast(tf1.round(self.o1*(2**M)),'int64')
+
+        self.w2s=[]
+        self.b2s=[]
+        for ia in range(8):
+
+        
+            self.w2s.append(tf1.Variable(intw2s[ia],dtype='int64') )
+            self.b2s.append(tf1.Variable(intb2s[ia],dtype='int64') )
+
+        outs = []
+        for ia in range(8):
+            outs.append(tf1.nn.softmax((tf1.matmul(self.o2,self.w2s[ia])+self.b2s[ia])/(C2s[ia]*(2**M)))) 
+        self.outputs = tf1.concat( outs,axis=1)       
+        # self.outputs = tf1.nn.softmax((tf1.matmul(self.o2,self.w2)+self.b2)/(C2*(2**M)))         
   
 # o1 = (double(T)*iw1+ib1)/C1;
 

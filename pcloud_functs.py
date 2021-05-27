@@ -27,12 +27,6 @@ def lowerResolution(Loc):
 
 def dilate_Loc(lrGT): 
 
-# %% Move from current resolution one level down and then one up
-# %% In the UP step enforce at each cube all 8 possible patterns  
-# %% input: sBBi, the sorted PC, by unique
-
-    # quotBB = np.floor(sBBi/2).astype('int')                    #% size is (nBBx3)
-    # Points_parent,iC = np.unique(quotBB,return_inverse=True,axis=0)  #   % size of iC is (nBBx3)
 
     PatEl = np.array( [[0, 0, 0],
                        [1, 0, 0],
@@ -55,12 +49,46 @@ def dilate_Loc(lrGT):
     return LocM
 
 
+def dilate_Loc2(lrGT): 
+
+
+    PatEl = np.array( [[0, 0, 0],
+                       [1, 0, 0],
+                       [0, 1, 0],
+                       [1, 1, 0],
+                       [0, 0, 1],
+                       [1, 0, 1],
+                       [0, 1, 1],
+                       [1, 1, 1]])
+                       
+
+    llrGT = lrGT.shape[0]
+    BlockiM = np.zeros([0,3],'int')
+    Aligns = np.zeros((0,),'int')
+    for iloc in range(8):    # % size(PatEl,1) = 8
+        iv3 = PatEl[iloc,:]
+        Blocki = lrGT*2+iv3
+        BlockiM = np.concatenate((BlockiM,Blocki),0) 
+        Aligns = np.concatenate((Aligns,iloc*np.ones((llrGT,),'int8')),0) 
+        
+    # LocM,iC = np.unique(BlockiM,return_inverse=True,axis=0)
+    # LocM2 = BlockiM2[iC]#np.unique(BlockiM2,axis=0)
+    
+    return BlockiM,Aligns
+
 def pcread(ply_path):
     pcd = open3d.io.read_point_cloud(ply_path )
     GT = np.asarray(pcd.points,'int16')   
     return GT
 
-
+def pcwrite(Loc,ply_path):
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.cpu.pybind.utility.Vector3dVector(Loc)
+    open3d.io.write_point_cloud(ply_path, pcd)
+    
+    
+    
+    
 def pcfshow(ply_path):
     pcd = open3d.io.read_point_cloud(ply_path )
     open3d.visualization.draw_geometries([pcd]) #, zoom=0.3412,

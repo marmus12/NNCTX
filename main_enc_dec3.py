@@ -16,7 +16,7 @@ import h5py
 import tensorflow.compat.v1 as tf1
 from models import tfint10_2,tfint10_3
 from ac_functs import ac_model2
-from usefuls import compare_Locations,plt_imshow,write_bits,read_bits,write_ints,read_ints,get_dir_size
+from usefuls import compare_Locations,plt_imshow,write_bits,read_bits,write_ints,read_ints,get_dir_size,show_time_spent
 import time
 from glob import glob
 import globz
@@ -28,10 +28,11 @@ import inspect
 from shutil import copyfile
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
-# enc_functs_file = 'enc_functs_fast35'
+
 GPU=1
 fast_model=1
-decode=1
+
+decode=0
 #
 continu = 0
 if continu:
@@ -39,7 +40,7 @@ if continu:
     i_start = 47
 else:
     i_start = 0
-sample = 'phil9'#'redandblack'#'longdress'#'loot'
+sample = 'redandblack'#'redandblack'#'longdress'#'loot'
 
 ds = pc_ds(sample)
 

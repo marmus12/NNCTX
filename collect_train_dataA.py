@@ -17,17 +17,18 @@ import numpy as np
 
 globz.init()
 #%%
-from enc_functs_fast44d import get_uctxs_counts2
+from enc_functs_fast45A import get_uctxs_counts2
 root_dir = '/media/emre/Data/DATA/'
 #%%
-samples = ['andrew10','david10','sarah10','longdress','soldier']
+samples = ['andrew10','soldier']
 
-nfr_per_samples = [6,6,6,9,9]
+nfr_per_samples = [1,1]
+alignment =0
 
 
 temp_type = 4*5*5
 # min_fr_count=1
-out_dir = root_dir+'45A_ads6_ls9'+str(temp_type)+'/'
+out_dir = root_dir+'45A_a1s1_align'+str(alignment)+'/'
 
 #%%
 if not os.path.exists(out_dir):
@@ -59,7 +60,7 @@ for i_sample,sample in enumerate(samples):
         ply_paths.append( ds.filepaths[i_fr])
         GT = ds.read_frame(i_fr)
 
-        ctxs,counts = get_uctxs_counts2(GT,temp_type)
+        ctxs,counts = get_uctxs_counts2(GT,temp_type,0,alignment)
 
         
         if type(ctxs)!=int:

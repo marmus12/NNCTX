@@ -54,7 +54,7 @@ train_data_dirs = ['/media/emre/Data/DATA/45A_ads6_ls9_align0/',
 
 
 
-
+bs1 = batch_size//8
 # val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
            #     '/home/emre/Documents/DATA/soldier_1_122/']
 train_dss = []
@@ -105,35 +105,42 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
 
 
-
-
-tfcounts = tf1.placeholder(dtype='float',shape = [None,2])
+tfcounts = tf1.placeholder(dtype='float',shape = [batch_size,2])
 
 
 losses = []
 # loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0])+tfcounts[:,1]*tf1.log(mdl.output[:,1]))
 
-
 for ia in range(8):
-    losses.append(-tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.outputs[:,2*ia]+minprob)
-                                  + tfcounts[:,1]*tf1.log(mdl.outputs[:,2*ia+1]+minprob))/tf1.reduce_sum(tfcounts[:,1]) )
+    a_start = ia*bs1
+    a_end = (ia+1)*bs1
+    losses.append(-tf1.reduce_sum( tfcounts[a_start:a_end,0]*tf1.log(mdl.outputs[a_start:a_end,2*ia]+minprob)
+                                  + tfcounts[a_start:a_end,1]*tf1.log(mdl.outputs[a_start:a_end,2*ia+1]+minprob) ) / tf1.reduce_sum(tfcounts[a_start:a_end,1]) )
 
-
+Tloss = tf1.reduce_sum(losses)
 
 opti = tf1.train.AdamOptimizer(learning_rate=learning_rate)
 
 step = tf.Variable(0, dtype=tf.int64)
 step_update = step.assign_add(1)
 
-tr_loss_summs,train_writers,train_writer_flushs,train_ops = [],[],[],[]
-for ia in range(8):
-    train_ops.append( opti.minimize(losses[ia]))
-    train_writers.append( tf.summary.create_file_writer(logdir+ 'train'+str(ia)) )
+# tr_loss_summs,train_writers,train_writer_flushs,train_ops = [],[],[],[]
+# for ia in range(8):
+    # train_ops.append( opti.minimize(losses[ia]))
+    # train_writers.append( tf.summary.create_file_writer(logdir+ 'train'+str(ia)) )
 
-    with train_writers[ia].as_default():
-      tr_loss_summs.append(tf.summary.scalar("train_loss"+str(ia), losses[ia], step=step))
+    # with train_writers[ia].as_default():
+    #   tr_loss_summs.append(tf.summary.scalar("train_loss"+str(ia), losses[ia], step=step))
 
-    train_writer_flushs.append( train_writers[ia].flush())
+    # train_writer_flushs.append( train_writers[ia].flush())
+
+train_op = opti.minimize(Tloss)
+
+train_writer = tf.summary.create_file_writer(logdir+ 'train')
+with train_writer.as_default():
+  tr_loss_summ = tf.summary.scalar("train_loss", Tloss, step=step)
+train_writer_flush = train_writer.flush()
+
 
 #%%
 val_writer = tf.summary.create_file_writer(logdir+ 'val')  
@@ -147,8 +154,9 @@ val_writer_flush = val_writer.flush()
 sess = tf1.Session()
 sess.run(tf1.global_variables_initializer())
 
-for ia in range(8):
-    sess.run([train_writers[ia].init(), step.initializer])
+# for ia in range(8):
+#     sess.run([train_writers[ia].init(), step.initializer])
+sess.run(train_writer.init())
 sess.run(val_writer.init())
 
 
@@ -158,28 +166,35 @@ prev_tr_loss = 10000000
 
 num_batchess = np.zeros((8,),int)
 for ia in range(8):
-    num_batchess[ia] = len(train_indss[ia])//batch_size
+    num_batchess[ia] = len(train_indss[ia])//bs1
 
+
+trctxs = np.zeros((batch_size,ctx_type),dtype='bool')
+trcounts = np.zeros((batch_size,2),dtype='int')
 num_batches = np.min(num_batchess)
 done=0
 for epoch in range(num_epochs):
     
+    for ia in range(8):
+        np.random.shuffle(train_indss[ia])
+    
     print('epoch:' + str(epoch))
+    
     for ibatch in range(num_batches):    
-   # if(epoch%10==0):
         for ia in range(8):
-            print('alignment:'+ str(ia))
-            np.random.shuffle(train_indss[ia])
-            batch_inds = train_indss[ia][ibatch*batch_size:(ibatch+1)*batch_size]
-
-            trctxs = train_dss[ia].ctxs[batch_inds,:]
-            trcounts = train_dss[ia].counts[batch_inds,:]
-            sess.run([train_ops[ia]],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})
-
-            tr_loss = sess.run([losses[ia],tr_loss_summs[ia]],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})   
-            sess.run(step_update)
-            sess.run(train_writer_flushs[ia])
-            print('tr_loss:'+str(tr_loss))
+            # print('alignment:'+ str(ia))
+            batch_inds = train_indss[ia][ibatch*bs1:(ibatch+1)*bs1]
+            a_start = ia*bs1
+            a_end = (ia+1)*bs1
+            trctxs[a_start:a_end] = train_dss[ia].ctxs[batch_inds,:]
+            trcounts[a_start:a_end] = train_dss[ia].counts[batch_inds,:]
+            
+                   
+        sess.run([train_op],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})
+        tr_loss = sess.run([Tloss,tr_loss_summ],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})   
+        sess.run(step_update)
+        sess.run(train_writer_flush)
+        print('tr_loss:'+str(tr_loss))
 
     #%%# VALIDATION:
     batch_inds = random.sample(val_inds,batch_size)

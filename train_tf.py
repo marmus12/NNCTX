@@ -32,17 +32,17 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 # if restore:
     
 num_epochs = 30000
-batch_size = 10000
+batch_size = 30000
 learning_rate = 0.001
 lambda_wr = 0
 from models import tfModel10 as mymodel
 
 
 minprob= 0.0001#0.01
-ctx_type=100
+ctx_type=36
 #%%
-val_data_dir = '/media/emre/Data/DATA/F4_a1_s1_100/'
-train_data_dir = '/media/emre/Data/DATA/F4_ads6_ls9_100/'
+val_data_dir = '/media/emre/Data/DATA/n36_a1s1_36/'
+train_data_dir = '/media/emre/Data/DATA/n36_ads6_ls9_36/'
 # val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
            #     '/home/emre/Documents/DATA/soldier_1_122/']
                 
@@ -57,17 +57,19 @@ val_ds = ctx_dataset2(val_data_dir,ctx_type)
 mdl= mymodel(ctx_type)
 
 
+
 #%% DISCARD THE MOST FREQUENT CONTEXT FROM TRAINING SET; SINCE COUNTS ARE SO HIGH
-# n_discard =1
-# tot_counts = np.sum(train_ds.counts,1)
-# disc_ind = np.argmax(tot_counts)
-# ###
+
+tot_counts = np.sum(train_ds.counts,1)
+disc_ind = np.argmax(tot_counts)
+###
 vtot_counts = np.sum(val_ds.counts,1)
 vdisc_ind = np.argmax(vtot_counts)
+
 #%%##REFINE TRAINING SET BY COUNT RATIOS##################################
-count_ratio_th = 0.2
-ratios= np.min(train_ds.counts,1)/np.max(train_ds.counts,1)
-train_inds = np.where(ratios<count_ratio_th)[0]
+# count_ratio_th = 0.2
+# ratios= np.min(train_ds.counts,1)/np.max(train_ds.counts,1)
+# train_inds = np.where(ratios<count_ratio_th)[0]
 
 
 
@@ -129,8 +131,10 @@ sess.run(tf1.global_variables_initializer())
 
 sess.run([train_writer.init(),val_writer.init(), step.initializer])
 
-#train_inds = list(range(disc_ind))+list(range(disc_ind+1,train_ds.n_ctxs))#list(range(train_ds.n_ctxs))
+train_inds = list(range(disc_ind))+list(range(disc_ind+1,train_ds.n_ctxs))#list(range(train_ds.n_ctxs))
 val_inds = list(range(vdisc_ind))+list(range(vdisc_ind+1,val_ds.n_ctxs))#range(val_ds.n_ctxs)
+# #train_inds = list(range(disc_ind))+list(range(disc_ind+1,train_ds.n_ctxs))#list(range(train_ds.n_ctxs))
+# val_inds = list(range(vdisc_ind))+list(range(vdisc_ind+1,val_ds.n_ctxs))#range(val_ds.n_ctxs)
 
 best_val_loss = 100000000
 prev_tr_loss = 10000000

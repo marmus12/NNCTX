@@ -26,42 +26,38 @@ globz.init()
 from datetime import datetime
 import inspect
 from shutil import copyfile
+from config_utils import get_model_info
+
 ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 
-GPU=1
-fast_model=1
-
-decode=0
+GPU=0
+model_type  = 'n36'
+assert(model_type in ['n36','fast','slow','n50','n75'])
+decode=1
 #
-continu = 0
-if continu:
-    prev_dir = '/media/emre/Data/main_enc_dec3/ricardo10_20210514-150813/'
-    i_start = 47
-else:
-    i_start = 0
-sample = 'redandblack'#'redandblack'#'longdress'#'loot'
 
-ds = pc_ds(sample)
+filepaths0 = glob('/media/emre/Data/DATA/Cat1A/*.ply')
+ori_levels = []
+filepaths =[]
+for fpath in filepaths0:
+    ori_level=int(fpath.split('vox')[-1].split('.ply')[0][0:2])
+    if ori_level<12:
+        ori_levels.append(ori_level)
+        filepaths.append(fpath)
 
-ori_level = ds.bitdepth
 
-filepaths = ds.filepaths#[0:10]
 
+assert(len(ori_levels)==len(filepaths))
 ########
 # globz.batch_size = 10000#0000
 
 #%%########
 if not GPU:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-ctx_type = 100
-if fast_model:
-    enc_functs_file = 'enc_functs_fast44d'
-    log_id = '20210421-180239'
-else:
-    enc_functs_file = 'enc_functs_slow35'
-    log_id = '20210409-225535'#'20210415-222905'#
-    
+
+enc_functs_file,log_id,ctx_type = get_model_info(model_type)
+print('log_id:'+log_id)
 exec('from '+ enc_functs_file +' import ENCODE_DECODE')
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
 
@@ -73,18 +69,18 @@ output_root = '/media/emre/Data/main_enc_dec3/'
 # if ds.body=='upper':
 #     assert(str(ori_level) in sample)
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
-if continu:
-    output_dir = prev_dir
-else:
-    output_dir = output_root + sample +'_' + curr_date + '/'
-    os.mkdir(output_dir)
+# if continu:
+#     output_dir = prev_dir
+# else:
+output_dir = output_root + curr_date + '/'
+os.mkdir(output_dir)
 curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
 copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])     
 copyfile(working_dir+enc_functs_file+'.py',output_dir + curr_date + "__" + enc_functs_file+'.py')  
   
 root_bs_dir = output_dir + 'bss/'
-if not continu:
-    os.mkdir(root_bs_dir)
+# if not continu:
+os.mkdir(root_bs_dir)
 ##################################################################
 # print(bs_dir)
 nn_model = tfint10_3(ckpt_path)
@@ -100,26 +96,27 @@ sess.run(tf1.global_variables_initializer())
 
 for ifile,filepath in enumerate(filepaths):
     
-    if continu:
-        condition_on_ifile = ifile>=i_start
-    else:
-        condition_on_ifile = True
+    ori_level = ori_levels[ifile]
+    # if continu:
+    #     condition_on_ifile = ifile>=i_start
+    # else:
+    condition_on_ifile = True
         
     if condition_on_ifile:
         
         
-        iframe = ds.ifile2iframe(ifile)
+        # iframe = ds.ifile2iframe(ifile)
         # assert (iframe in filepath)
         
-        bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
+        bs_dir = root_bs_dir+'ifile'+str(ifile)+'/'
         
         acbspath = bs_dir+'AC.dat'
         
         os.mkdir(bs_dir)
         GT = pcread(filepath).astype('int')
-        if ori_level<ds.bitdepth:
-            for il in range(ds.bitdepth-ori_level):
-                GT = lowerResolution(GT)
+        # if ori_level<ds.bitdepth:
+        #     for il in range(ds.bitdepth-ori_level):
+        #         GT = lowerResolution(GT)
         #%%###################################
         ac_model = ac_model2(2,acbspath,1)
         _,time_spente = ENCODE_DECODE(1,bs_dir,nn_model,ac_model,sess,ori_level,GT)
@@ -136,48 +133,47 @@ for ifile,filepath in enumerate(filepaths):
         npts = GT.shape[0]
         bpv = CL/npts
         bpvs[ifile]=bpv
-        print('iframe: ' +iframe+' bpv: '+str(bpv))
-        ave_bpv = np.mean(bpvs[i_start:(ifile+1)])
-        print('ave. bpv up to now: '+str(ave_bpv))
+        print('filepath: ' +filepath+' bpv: '+str(bpv))
+        ave_bpv = np.mean(bpvs[0:(ifile+1)])
+        # print('ave. bpv up to now: '+str(ave_bpv))
         
         times[ifile,0]= int(time_spente)
         
  
     
-if continu:
-    for ifile in range(i_start):
-        iframe = ds.ifile2iframe(ifile)
+# if continu:
+#     for ifile in range(i_start):
+#         iframe = ds.ifile2iframe(ifile)
         
-        bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
+#         bs_dir = root_bs_dir+'iframe'+str(iframe)+'/'
         
-        CL = get_dir_size(bs_dir)
+#         CL = get_dir_size(bs_dir)
         
-        npts =ds.nptss[ifile]
-        bpv = CL/npts
-        bpvs[ifile]=bpv    
+#         npts =ds.nptss[ifile]
+#         bpv = CL/npts
+#         bpvs[ifile]=bpv    
     
  
     
  
-ave_etime = np.mean(times[i_start:,0])
-nminse = int(ave_etime//60)
-nsecse = int(np.round(ave_etime-nminse*60))
-print('ave enc time: ' + str(nminse) + 'm ' + str(nsecse) + 's')
+# ave_etime = np.mean(times[i_start:,0])
+# nminse = int(ave_etime//60)
+# nsecse = int(np.round(ave_etime-nminse*60))
+# print('ave enc time: ' + str(nminse) + 'm ' + str(nsecse) + 's')
 
-if decode:
-    ave_dtime = np.mean(times[i_start:,1])
-    nminsd = int(ave_dtime//60)
-    nsecsd = int(np.round(ave_dtime-nminsd*60))
-    print('ave dec time: ' + str(nminsd) + 'm ' + str(nsecsd) + 's')
-else:
-    ave_dtime=0
+# if decode:
+#     ave_dtime = np.mean(times[i_start:,1])
+#     nminsd = int(ave_dtime//60)
+#     nsecsd = int(np.round(ave_dtime-nminsd*60))
+#     print('ave dec time: ' + str(nminsd) + 'm ' + str(nsecsd) + 's')
+# else:
+#     ave_dtime=0
 
-ave_bpv = np.mean(bpvs)
-print('ave. bpv: '+str(ave_bpv))
+# ave_bpv = np.mean(bpvs)
+# print('ave. bpv: '+str(ave_bpv))
    
 
-np.save(output_dir+'info.npy',{'times':times,'bpvs':bpvs,'fpaths':filepaths,
-                               'ave_bpv':ave_bpv,'ave_times':[ave_etime,ave_dtime]})
+np.save(output_dir+'info.npy',{'times':times,'bpvs':bpvs,'fpaths':filepaths})
 
 
 

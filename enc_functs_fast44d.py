@@ -59,17 +59,19 @@ def OneSectOctMask2( SLocM,icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, Se
     if for_train:
         Des = np.zeros((nT,),'int')
 
-
-
+    wsize= (2*b+1)
+    swsize = wsize**2
+    swsize2 = 2*swsize
+    swsize3 = 3*swsize
     # iTemp1 = -1
     for iiBB,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
         iz = SLocM[iiBB,0] #globz.LocM[iBB,2]
         ix = SLocM[iiBB,1] #globz.LocM[iBB,0]
         #%%
-        Temp[iiBB,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        Temp[iiBB,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        Temp[iiBB,50:75] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-        Temp[iiBB,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,0:swsize] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,swsize:swsize2] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,swsize2:swsize3] = BWTrueM[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
+        Temp[iiBB,swsize3:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
 
         #%%
         # z1 = iz-b
@@ -202,7 +204,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
         SSL2 = StartStopLength[:,2]>0
         # np.save(bs_dir+'SSL'+str(level)+'.npy',{'SSL':SSL2,'ncPC':ncPC})
         
-        if level==ori_level:
+        if level==ori_level and not for_train:
 
             ssbits = ''
             for ssbit in SSL2:

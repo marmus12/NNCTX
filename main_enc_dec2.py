@@ -26,18 +26,24 @@ globz.init()
 from datetime import datetime
 import inspect
 from shutil import copyfile
+#%%
 ckpt_dir = '/home/emre/Documents/train_logs/'
+PCC_Data_Dir ='/media/emre/Data/DATA/'
+output_root = '/media/emre/Data/main_enc_dec/'
 #%%#CONFIGURATION
 fast_model=1
-Amodel = 1
-# if not fast_model:
-#      globz.batch_size = 10000
-GPU = 0
+nonext=0
+n50=0
+GPU = 1
 decode=1
+ctx_type = 100
+# if eGPU and decode:
+#     dGPU = 0
+
 # sample = 'thaidancer'#'redandblack'#'longdress'#'loot'
 # ds = pc_ds(sample)
-ori_level = 10#ds.bitdepth
-filepath = '/media/emre/Data/DATA/loot/loot/Ply/loot_vox10_1000.ply'
+ori_level = 12#ds.bitdepth
+filepath = '/media/emre/Data/DATA/Cat1A/egyptian_mask_vox12.ply'
 assert(str(ori_level) in filepath)
 nlevel_down = 0
 #%%
@@ -52,29 +58,38 @@ nlevel_down = 0
 #########
 
 
-ctx_type = 100
+
 if not GPU:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-if fast_model and not Amodel:
+if fast_model:# and not Amodel:
     from enc_functs_fast44d import ENCODE_DECODE
     log_id = '20210421-180239'
     ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
-    nn_model = tfint10_3(ckpt_path)
-elif fast_model and Amodel:
-    from enc_functs_fast45A import ENCODE_DECODE
-    log_id = '20210527-075818'#'20210526-212907'   
+    # nn_model = tfint10_3(ckpt_path)
+# elif fast_model and Amodel:
+#     from enc_functs_fast45A import ENCODE_DECODE
+#     log_id = '20210527-153219'#'20210527-075818'#'20210526-212907'   
+#     ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
+#     nn_model = tfint10_3A(ckpt_path)
+elif nonext:
+    
+    from enc_functs_fast44nonext import ENCODE_DECODE
+    log_id = '20210605-005849'
     ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
-    nn_model = tfint10_3A(ckpt_path)
+    # nn_model = tfint10_3(ckpt_path)
+elif n50:
+    from enc_functs_fast44_50 import ENCODE_DECODE
+    log_id = '20210606-011442'
+    ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'    
 else:
-    from enc_functs_fast35 import ENCODE_DECODE
+
+    from enc_functs_slow35 import ENCODE_DECODE
     log_id = '20210409-225535'#'20210415-222905'#
     ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
-    nn_model = tfint10_3(ckpt_path)
-    
 
+nn_model = tfint10_3(ckpt_path)
 #################################################################
-PCC_Data_Dir ='/media/emre/Data/DATA/'
-output_root = '/media/emre/Data/main_enc_dec/'
+
 # if ds.body=='upper':
 #     assert(str(ori_level) in sample)
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")

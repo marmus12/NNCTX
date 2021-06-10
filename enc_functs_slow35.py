@@ -51,8 +51,8 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
 
     # global esymbs,symbs
 
-    wsize = np.sqrt(ctx_type//4).astype(int)#np.sqrt((ctx_type+0.5)*2/5).astype(int)
-    b = (wsize-1)//2
+    wsize = 5#np.sqrt(ctx_type//4).astype(int)#np.sqrt((ctx_type+0.5)*2/5).astype(int)
+    b = 2#(wsize-1)//2
     
     [ix1,iz1] = np.where(np.ones((wsize,wsize)))
     
@@ -88,27 +88,16 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
 
     # iBBr_in=0
     # Locp = np.zeros((StartStopLengthM[icPC,2],3),'int')
-    TCaus = np.zeros((TCsize,),'int')
-    TNCaus = np.zeros((TCsize+1,),'int')
+    TCaus = np.zeros((TCsize,),'bool')
+    TNCaus = np.zeros((TCsize+1,),'bool')
     # psymbs = []
     if ENC or for_train:
-        iTemp1 = -1
-        for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
+        # iTemp1 = -1
+        for iTemp1,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
             iz = globz.LocM[iBB,2]
             ix = globz.LocM[iBB,0]
     
-   
 
-            iTemp1+=1   
-            # iTin = 0
-            # for xi in range(ix-b,ix+b+1):            
-            #     for zi in range(iz-b,iz+b+1):
-            #         Temp[iTemp1,iTin] = BWTrue2[zi,xi]
-            #         iTin+=1 
-            # for xi in range(ix-b,ix+b+1):                    
-            #     for zi in range(iz-b,iz+b+1):
-            #         Temp[iTemp1,iTin] = BWTrue1[zi,xi]
-            #         iTin+=1  
             Temp[iTemp1,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
             Temp[iTemp1,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
     
@@ -119,45 +108,23 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
     
             Temp[iTemp1,2*T12size:(2*T12size+TCsize)] = TCaus
             Temp[iTemp1,(2*T12size+TCsize):3*T12size] = TNCaus
-            # Temp[iTemp1,3*T12size:ctx_type] = Temp1M
-            # iTin = 3*T12size
-            # for xi in range(ix-b,ix+b+1):                    
-            #     for zi in range(iz-b,iz+b+1):
-            #         Temp[iTemp1,iTin] = BWTrue1M[zi,xi]
-            #         iTin+=1     
+
             Temp[iTemp1,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
             
         if not for_train:               
-            # nb = np.ceil(nT/globz.batch_size).astype('int')
-            # for ib in range(nb):
-            #     bTemp = Temp[ib*globz.batch_size:(ib+1)*globz.batch_size,:]
-            #     # Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = nn_model.model(bTemp,training=False).numpy()   
-            #     Tprobs[ib*globz.batch_size:(ib+1)*globz.batch_size,:] = sess.run(nn_model.output,feed_dict={nn_model.input:bTemp})
+
             Tprobs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp})                                    
-    # if not ENC:
-    #     bTemp = np.zeros((globz.batch_size,ctx_type),'int')
-     
-    # if not for_train:
-    iTemp = -1
+
+    # iTemp = -1
 ##########2nd loop##########################################
-    for iBB in range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-        iTemp+=1
+    for iTemp,iBB in enumerate(range( StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1)):
+        # iTemp+=1
         iz = globz.LocM[iBB,2]
         ix = globz.LocM[iBB,0]
         
         if not ENC:
             Temp[iTemp,0:25] = BWTrue2[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
             Temp[iTemp,25:50] = BWTrue1[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
-            # iTin = 0
-            # for xi in range(ix-b,ix+b+1):                    
-            #     for zi in range(iz-b,iz+b+1):
-            #         Temp[iTemp,iTin] = BWTrue2[zi,xi]
-            #         iTin+=1 
-            # for xi in range(ix-b,ix+b+1):                    
-            #     for zi in range(iz-b,iz+b+1):
-            #         Temp[iTemp,iTin] = BWTrue1[zi,xi]
-            #         iTin+=1  
-
 
             for i1 in range( TCsize):
                 TCaus[i1] = BWTrue[iz+dispz[i1], ix+dispx[i1]]
@@ -166,12 +133,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
 
             Temp[iTemp,2*T12size:(2*T12size+TCsize)] = TCaus
             Temp[iTemp,(2*T12size+TCsize):3*T12size] = TNCaus
-        # Temp[iTemp1,3*T12size:ctx_type] = Temp1M
-            # iTin = 3*T12size
-            # for xi in range(ix-b,ix+b+1):                    
-            #     for zi in range(iz-b,iz+b+1):
-            #         Temp[iTemp,iTin] = BWTrue1M[zi,xi]
-            #         iTin+=1              
+           
             Temp[iTemp,75:] = BWTrue1M[iz-b:iz+b+1,ix-b:ix+b+1].flatten('F')
             
         if for_train:
@@ -208,11 +170,7 @@ def OneSectOctMask2( icPC, BWTrue, BWTrue1, BWTrue2, BWTrueM, BWTrue1M, SectSize
     
                     globz.iBBr +=1
                 
-            # globz.isymb +=1      
-        #############################3
-    # if not ENC:
 
-    #     Des = 0
     if for_train:
         return Temp,Des
     

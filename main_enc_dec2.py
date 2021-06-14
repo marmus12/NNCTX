@@ -31,10 +31,10 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 PCC_Data_Dir ='/media/emre/Data/DATA/'
 output_root = '/media/emre/Data/main_enc_dec/'
 #%%#CONFIGURATION
-fast_model=1
+fast_model=0
 nonext=0
 n50=0
-GPU = 1
+GPU = 0
 decode=1
 ctx_type = 100
 # if eGPU and decode:
@@ -42,10 +42,10 @@ ctx_type = 100
 
 # sample = 'thaidancer'#'redandblack'#'longdress'#'loot'
 # ds = pc_ds(sample)
-ori_level = 12#ds.bitdepth
-filepath = '/media/emre/Data/DATA/Cat1A/egyptian_mask_vox12.ply'
+ori_level = 9#ds.bitdepth
+filepath = '/media/emre/Data/DATA/phil9/ply/frame0000.ply'
 assert(str(ori_level) in filepath)
-nlevel_down = 0
+nlevel_down = 3
 #%%
 # sample = 'Thaidancer'
 # filepath = '/media/emre/Data/DATA/Thaidancer_viewdep_vox12.ply'

@@ -364,18 +364,26 @@ class tfModel11():
         self.w2 = tf1.Variable(xinitializer(shape=(self.n_latent,2))) 
         self.b2 = tf1.Variable(zinitializer(shape=(2,))) 
         self.output = tf1.nn.softmax(tf1.matmul(self.o1,self.w2)+self.b2)        
-
+################################################################################
 
 class tfModel10A():
     
-    def __init__(self,ctx_type):
+    def __init__(self,ctx_type,from_scratch=True,init_ws=0):
         tf1.disable_eager_execution()
+
         xinitializer = keras.initializers.GlorotUniform()
         zinitializer = keras.initializers.zeros()
         self.input = tf1.placeholder(dtype='float',shape=[None,ctx_type])
-        
-        self.w1 = tf1.Variable(xinitializer(shape=(ctx_type,2*ctx_type))) 
-        self.b1 = tf1.Variable(zinitializer(shape=(2*ctx_type,))) 
+        if from_scratch:
+            w1init = xinitializer(shape=(ctx_type,2*ctx_type))
+            b1init = zinitializer(shape=(2*ctx_type,))
+            hl_trainable = True
+        else:
+            w1init = init_ws['w1']
+            b1init = init_ws['b1']
+            hl_trainable=False
+        self.w1 = tf1.Variable(w1init,trainable=hl_trainable) 
+        self.b1 = tf1.Variable(b1init,trainable=hl_trainable) 
         self.o1 = tf1.nn.relu((tf1.matmul(self.input,self.w1)+self.b1))
 
         self.w2s = []
@@ -393,15 +401,27 @@ class tfModel10A():
             # self.outputs[:,2*ia+1] = tf1.nn.softmax(mm(self.o1,self.w2s[ia])+self.b2s[ia]))
 class tfint10_3A():
     
-    def __init__(self,ckpt_path,M=14,Ne=10):
-        ori_weights = np.load(ckpt_path,allow_pickle=True)[()]
-        w1 = ori_weights[0]
-        b1 = ori_weights[1]
+    def __init__(self,ckpt_path,hckpt_path=0,M=14,Ne=10):
+        
+        ori_weights = np.load(ckpt_path,allow_pickle=True)[()]   
+        if not hckpt_path:
+            w1 = ori_weights[0]
+            b1 = ori_weights[1]
+        else:
+            hidden_weights = np.load(hckpt_path,allow_pickle=True)[()]
+            w1 = hidden_weights[0]
+            b1 = hidden_weights[1]
+            
         w2s=[]
         b2s=[]
+        if hckpt_path:
+            init_wi = 0
+        else:
+            init_wi = 2
         for ia in range(8):
-            w2s.append(ori_weights[2+2*ia])
-            b2s.append(ori_weights[3+2*ia])
+            w2s.append(ori_weights[init_wi+2*ia])
+            b2s.append(ori_weights[init_wi+1+2*ia])
+            
         self.ctx_type = w1.shape[0]        
         
         C1 = 2**Ne/np.max((np.max(w1),np.max(b1)))

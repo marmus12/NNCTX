@@ -10,7 +10,7 @@ Created on Fri Mar  5 15:44:56 2021
 import sys
 
 
-sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
+sys.path.append('Reference-arithmetic-coding-master/python/')
 
 # import contextlib
 import arithmeticcoding

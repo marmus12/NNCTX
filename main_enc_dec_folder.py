@@ -32,8 +32,8 @@ ckpt_dir = '/home/emre/Documents/train_logs/'
 #%%#CONFIGURATION
 
 GPU=0
-model_type  = 'n36'
-assert(model_type in ['n36','fast','slow','n50','n75'])
+model_type  = 'fNNOC'
+assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
 decode=1
 #
 

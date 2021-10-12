@@ -33,8 +33,6 @@ model_type='NNOC'
 assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
 GPU = 0
 decode=1
-ctx_type = 100
-
 
 ori_level = 10
 filepath = '/path/to/plys/redandblack_vox10_1550.ply' #phil9/ply/frame0000.ply'

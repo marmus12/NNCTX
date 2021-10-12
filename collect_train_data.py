@@ -18,16 +18,16 @@ import numpy as np
 globz.init()
 #%%
 from enc_functs_fast44d import get_uctxs_counts2
-root_dir = '/media/emre/Data/DATA/'
+root_dir = '/path/to/pc_datasets/'
 #%%
 samples = ['andrew10','soldier']
 
 nfr_per_samples = [1,1]
 
 
-temp_type = 36
+temp_type = 100
 # min_fr_count=1
-out_dir = root_dir+'n36_a1s1_'+str(temp_type)+'/'
+out_dir = root_dir+'data_'+str(temp_type)+'/'
 
 #%%
 if not os.path.exists(out_dir):
@@ -64,15 +64,6 @@ for i_sample,sample in enumerate(samples):
         
         if type(ctxs)!=int:
                
-            # ctxs = boolean(ctxs);
-            #%% keep only the significant ones:
-            # if min_fr_count>1
-            #     good_ctx_inds = sum(counts,2)>=min_fr_count;
-            #     ctxs = ctxs(good_ctx_inds,:);
-            #     counts = counts(good_ctx_inds,:);
-            #     clear good_ctx_inds
-            # end
-            # %%
             
             all_ctxs = np.concatenate((all_ctxs,ctxs),axis=0)#[all_ctxs ; ctxs];
             all_counts = np.concatenate((all_counts,counts),axis=0)#[all_ctxs ; ctxs];
@@ -101,19 +92,4 @@ for i_sample,sample in enumerate(samples):
 
 
 
-# ply_paths = ply_paths(1:i_fr_tot,:);
-
-
-
-# save([out_dir 'ctxs.mat'],'all_ctxs','-v7.3');
-# save([out_dir 'counts.mat'],'all_counts','-v7.3');
-# save([out_dir 'ply_paths.mat'],'ply_paths','-v7.3'); 
-
-
-# n_ctxs = size(all_ctxs,1);
-# fileID = fopen([out_dir 'info.txt'],'w');
-# fprintf(fileID,['n_ctxs: ' num2str(n_ctxs) '\n']);
-# fprintf(fileID,['sum(counts(:)): ' num2str(sum(all_counts(:))) '\n']);
-# fprintf(fileID,['sum(counts(:,1)): ' num2str(sum(all_counts(:,1))) '\n']);
-# fprintf(fileID,['sum(counts(:,2)): ' num2str(sum(all_counts(:,2))) '\n']);
 

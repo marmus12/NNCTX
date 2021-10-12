@@ -1,6 +1,8 @@
 # NNCTX
 
-Code for MMSP 2021 paper "Neural Network Modeling of Probabilities for Coding the Octree Representation of Point Clouds"
+Code for MMSP 2021 paper 
+
+"Neural Network Modeling of Probabilities for Coding the Octree Representation of Point Clouds"
 
 https://arxiv.org/abs/2106.06482
 

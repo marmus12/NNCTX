@@ -7,7 +7,7 @@ Created on Wed Feb 10 16:58:47 2021
 """
 import numpy as np
 import sys
-sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
+sys.path.append('Reference-arithmetic-coding-master/python/')
 
 import arithmeticcoding as arc
 

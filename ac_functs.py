@@ -17,45 +17,6 @@ import arithmeticcoding
 
 
 
-class ac_model:
-    
-     def __init__(self,nsyms,bsfile,ENC):
-         self.ENC = ENC
-         self.bsfile = bsfile
-         
-
-         self.nsyms = nsyms
-         self.initfreqs = arithmeticcoding.FlatFrequencyTable(self.nsyms)
-         self.freqs = arithmeticcoding.SimpleFrequencyTable(self.initfreqs)
-         
-         if ENC:
-             self.ofp = open(self.bsfile, "wb")
-             bitout = arithmeticcoding.BitOutputStream(self.ofp)
-             self.enc = arithmeticcoding.ArithmeticEncoder(32, bitout)
-         else:
-             self.ofp = open(self.bsfile, "rb")
-             bitin = arithmeticcoding.BitInputStream(self.ofp)
-             # bitin = contextlib.closing(arithmeticcoding.BitOutputStream(self.ofp))              
-             self.dec = arithmeticcoding.ArithmeticDecoder(32, bitin)
-
-     def encode_symbol(self,symbol):
-        self.enc.write(self.freqs, symbol[0])
-        self.freqs.increment(symbol[0])
-
-     def end_encoding(self,):
-        self.enc.write(self.freqs, self.nsyms-1)
-        self.enc.finish()
-        self.ofp.close()
-
-
-     def decode_symbol(self,):
-         symbol = self.dec.read(self.freqs)
-         self.freqs.increment(symbol)   
-         return symbol
-
-     def end_decoding(self,):
-         self.ofp.close()
-
 
 class ac_model2:
     

@@ -14,12 +14,32 @@ from tensorflow import keras
 from pcloud_functs import pcread
 
 
-            
+class ctx_dataset2:
+
+
+    def __init__(self,data_dir='/path/to/data/',ctx_type=100,from_npy=True):
+
+
+        self.ctx_type = ctx_type
+        self.data_dir = data_dir
+        if not(from_npy):
+            f = h5py.File(self.data_dir+'ctxs.mat')        
+            self.ctxs = np.transpose(f['all_ctxs'][()])
+            f = h5py.File(self.data_dir+'counts.mat')        
+            self.counts = np.transpose(f['all_counts'][()])
+        else:
+            data = np.load(self.data_dir+'data.npy',allow_pickle=True)
+            self.ctxs = data[()]['ctxs']
+            self.counts = data[()]['counts']
+
+        assert(self.ctxs.shape[0]==self.counts.shape[0])
+        assert(self.ctxs.shape[1] == ctx_type)
+        self.n_ctxs = self.counts.shape[0]            
         
 
 class pc_ds:
     
-    def __init__(self,sample,root_dir = '/media/emre/Data/DATA/'):
+    def __init__(self,sample,root_dir = '/path/to/plys/'):
         
         self.sample = sample
         self.root_dir = root_dir 

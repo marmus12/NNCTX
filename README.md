@@ -1,7 +1,11 @@
 # NNCTX
 
 Code for MMSP 2021 paper "Neural Network Modeling of Probabilities for Coding the Octree Representation of Point Clouds"
+
+https://arxiv.org/abs/2106.06482
+
 ##########################################
+
 Run main_enc_dec.py to test encoding and decoding with trained models (in trained_models/ folder).
 
 To train your own models, 

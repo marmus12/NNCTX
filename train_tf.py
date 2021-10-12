@@ -19,17 +19,16 @@ from pcloud_functs import collect_blocks, collect_counts,ctxbits2block
 from train_utils import CL_criterion
 
 import open3d as o3d
-#from models import MyModel4,MyModel5,MyModel6
 
-from dataset import ctx_dataset, ctx_dataset2
+
+from dataset import  ctx_dataset2
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 #%%config
-# restore = True
-# if restore:
+
     
 num_epochs = 30000
 batch_size = 30000
@@ -39,12 +38,11 @@ from models import tfModel10 as mymodel
 
 
 minprob= 0.0001#0.01
-ctx_type=36
+ctx_type=100
 #%%
-val_data_dir = '/media/emre/Data/DATA/n36_a1s1_36/'
-train_data_dir = '/media/emre/Data/DATA/n36_ads6_ls9_36/'
-# val_data_dir = '/media/emre/Data/DATA/ricardo1_soldier1_100_minco_1/'
-           #     '/home/emre/Documents/DATA/soldier_1_122/']
+val_data_dir = '/path/to/val_data/'
+train_data_dir = '/path/to/train_data/'
+
                 
 
 train_ds = ctx_dataset2(train_data_dir,ctx_type)
@@ -133,8 +131,7 @@ sess.run([train_writer.init(),val_writer.init(), step.initializer])
 
 train_inds = list(range(disc_ind))+list(range(disc_ind+1,train_ds.n_ctxs))#list(range(train_ds.n_ctxs))
 val_inds = list(range(vdisc_ind))+list(range(vdisc_ind+1,val_ds.n_ctxs))#range(val_ds.n_ctxs)
-# #train_inds = list(range(disc_ind))+list(range(disc_ind+1,train_ds.n_ctxs))#list(range(train_ds.n_ctxs))
-# val_inds = list(range(vdisc_ind))+list(range(vdisc_ind+1,val_ds.n_ctxs))#range(val_ds.n_ctxs)
+
 
 best_val_loss = 100000000
 prev_tr_loss = 10000000
@@ -154,15 +151,9 @@ for epoch in range(num_epochs):
         batch_inds = train_inds[ibatch*batch_size:(ibatch+1)*batch_size]
         trctxs = train_ds.ctxs[batch_inds,:]
         trcounts = train_ds.counts[batch_inds,:]
-        # tr_loss= sess.run(loss,feed_dict = {mdl.input:trctxs,tfcounts:trcounts})  
-        # if tr_loss<4*prev_tr_loss:
+
         sess.run([train_op],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})
-    #         prev_tr_loss = tr_loss
-    #     else:
-    #         done=1
-    #         break
-    # if done==1:
-    #     break
+
     tr_loss = sess.run([loss,tr_loss_summ],feed_dict = {mdl.input:trctxs,tfcounts:trcounts})   
     sess.run(step_update)
     sess.run(train_writer_flush)
@@ -182,17 +173,6 @@ for epoch in range(num_epochs):
         np.save(checkpoint_path,sess.run(tf1.trainable_variables()))
         best_val_loss = val_loss
 
-
-
-
-
-# with tf.compat.v1.Session(graph=g) as sess:
-#   sess.run([writer.init(), step.initializer])
-
-#   for i in range(100):
-#     sess.run(all_summary_ops)
-#     sess.run(step_update)
-#     sess.run(writer_flush)
 
 
 

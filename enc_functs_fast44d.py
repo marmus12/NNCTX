@@ -8,7 +8,7 @@ Created on Mon Mar  1 15:36:29 2021
 import numpy as np
 import sys
 from pcloud_functs import pcshow,pcread,lowerResolution,inds2vol,vol2inds,dilate_Loc
-sys.path.append('/home/emre/Documents/kodlar/Reference-arithmetic-coding-master/python/')
+sys.path.append('Reference-arithmetic-coding-master/python/')
 from usefuls import in1d_index,plt_imshow,write_ints,read_ints,write_bits,read_bits,dec2bin2,bin2dec2,ints2bs,bs2ints
 import arithmeticcoding as arc
 import tensorflow.compat.v1 as tf1

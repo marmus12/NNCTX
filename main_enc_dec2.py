@@ -25,9 +25,9 @@ import inspect
 from shutil import copyfile
 from config_utils import get_model_info
 #%%
-ckpt_dir = '/home/emre/Documents/train_logs/'
-PCC_Data_Dir ='/media/emre/Data/DATA/'
-output_root = '/media/emre/Data/main_enc_dec/'
+ckpt_dir = 'trained_models/'
+
+output_root = '/specify_output_dir/'
 #%%#CONFIGURATION
 model_type='NNOC'
 assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
@@ -37,7 +37,7 @@ ctx_type = 100
 
 
 ori_level = 10
-filepath = '/media/emre/Data/DATA/Cat1A/redandblack_vox10_1550.ply' #phil9/ply/frame0000.ply'
+filepath = '/path/to/plys/redandblack_vox10_1550.ply' #phil9/ply/frame0000.ply'
 assert(str(ori_level) in filepath)
 nlevel_down = 0
 #%%

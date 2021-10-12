@@ -16,20 +16,23 @@ import inspect
 import numpy as np
 
 globz.init()
-#%%
-from enc_functs_fast44d import get_uctxs_counts2
+###CONFIGURATION%%
+model_type='NNOC'
+assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
+
 root_dir = '/path/to/pc_datasets/'
 #%%
 samples = ['andrew10','soldier']
 
 nfr_per_samples = [1,1]
+######################
 
-
-temp_type = 100
-# min_fr_count=1
+enc_functs_file,dummy,temp_type = get_model_info(model_type)
 out_dir = root_dir+'data_'+str(temp_type)+'/'
 
 #%%
+exec('from '+enc_functs_file+ ' import get_uctxs_counts2')
+
 if not os.path.exists(out_dir):
     os.mkdir(out_dir)
 curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)

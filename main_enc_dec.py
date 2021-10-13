@@ -27,14 +27,15 @@ from config_utils import get_model_info
 #%%
 
 #%%#CONFIGURATION
-model_type='NNOC'
+model_type='fNNOC'
 assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
-GPU = 0
+GPU = 1
 decode=1
 
-filepath = '/path/to/plys/redandblack_vox10_1550.ply' 
+filepath = '/media/emre/Data/DATA/phil9/ply/frame0000.ply' 
 
 nlevel_down = 0 #set number of times to downsample the input to compress a lower resolution
+
 
 #%%
 ckpt_dir = 'trained_models/'

@@ -66,7 +66,7 @@ sess.run(tf1.global_variables_initializer())
 
 GT = pcread(filepath).astype('int')
 ori_level = np.ceil(np.log2(np.max(GT))).astype(int)
-assert(str(ori_level) in filepath)
+#assert(str(ori_level) in filepath)
 #%%#LOWER RES INPUT FOR DEBUGGING:
 
 ori_level = ori_level-nlevel_down

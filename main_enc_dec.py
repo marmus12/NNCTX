@@ -7,7 +7,7 @@ Created on Wed Feb 10 14:30:32 2021
 """
 
 from pcloud_functs import pcread,lowerResolution
-#from scipy.io import loadmat, savemat
+import numpy as np
 import os, sys
 
 
@@ -25,22 +25,20 @@ import inspect
 from shutil import copyfile
 from config_utils import get_model_info
 #%%
-ckpt_dir = 'trained_models/'
 
-output_root = '/specify_output_dir/'
 #%%#CONFIGURATION
 model_type='NNOC'
 assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
 GPU = 0
 decode=1
 
-ori_level = 10
-filepath = '/path/to/plys/redandblack_vox10_1550.ply' #phil9/ply/frame0000.ply'
-assert(str(ori_level) in filepath)
-nlevel_down = 0
+filepath = '/path/to/plys/redandblack_vox10_1550.ply' 
+
+nlevel_down = 0 #set number of times to downsample the input to compress a lower resolution
+
 #%%
-
-
+ckpt_dir = 'trained_models/'
+output_root = 'output_root/'
 if not GPU:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -53,7 +51,8 @@ nn_model = tfint10_3(ckpt_path)
 
 
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
-
+if not os.path.exists(output_root):
+    os.mkdir(output_root)
 output_dir = output_root + curr_date + '/'
 os.mkdir(output_dir)
 curr_file = inspect.getfile(inspect.currentframe()) # script filename (usually with path)
@@ -61,14 +60,13 @@ copyfile(curr_file,output_dir + curr_date + "__" + curr_file.split("/")[-1])
 bs_dir = output_dir + 'bss/'
 os.mkdir(bs_dir)
 ##################################################################
-# print(bs_dir)
-
-
 
 sess = tf1.Session()
 sess.run(tf1.global_variables_initializer())
 
 GT = pcread(filepath).astype('int')
+ori_level = np.ceil(np.log2(np.max(GT))).astype(int)
+assert(str(ori_level) in filepath)
 #%%#LOWER RES INPUT FOR DEBUGGING:
 
 ori_level = ori_level-nlevel_down

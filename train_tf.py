@@ -16,7 +16,7 @@ from scipy.io import loadmat
 from usefuls import setdiff,find_common_rows,find_diff_rows,find_diff_rows_with_ind,plt_imshow
 #import plyfile
 from pcloud_functs import collect_blocks, collect_counts,ctxbits2block
-from train_utils import CL_criterion
+
 
 import open3d as o3d
 

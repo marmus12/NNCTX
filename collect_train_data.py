@@ -20,7 +20,7 @@ globz.init()
 model_type='NNOC'
 assert(model_type in ['NNOC','fNNOC','fNNOC1','fNNOC2','fNNOC3'])
 
-root_dir = '/path/to/pc_datasets/'
+root_dir = 'pc_datasets/'
 #%%
 samples = ['andrew10','soldier']
 

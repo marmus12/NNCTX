@@ -11,132 +11,15 @@ from tensorflow.keras import layers
 from tensorflow.keras import backend as K
 import numpy as np
 
-
-    
-
-
-                        
-   
-  
-       
-
-     
-
       
  
-class MyModel10():
-    
-    def __init__(self,ctx_type):
-        self.ctx_type=ctx_type
-        self.model = keras.Sequential()
-        self.model.add(keras.Input(shape=(ctx_type,)))  # contexts
-        self.model.add(layers.Dense(2*ctx_type,activation="relu"))
-
-        #self.model.add(layers.Dense(50,activation="relu"))
-        # Finally, we add a classification layer.
-        self.model.add(layers.Dense(2,activation = "softmax"))
-
-        # Can you guess what the current output shape is at this point? Probably not.
-        # Let's just print it:
-        self.model.summary()            
-        
-        
-class Model10d(): #MyModel10 with a dropout layer added
-    
-    def __init__(self,ctx_type,do_rate=0.2):
-        self.ctx_type=ctx_type
-        self.model = keras.Sequential()
-        self.model.add(keras.Input(shape=(ctx_type,)))  # contexts
-        self.model.add(layers.Dense(2*ctx_type,activation="relu"))
-        self.model.add(layers.Dropout(do_rate))
-        #self.model.add(layers.Dense(50,activation="relu"))
-        # Finally, we add a classification layer.
-        self.model.add(layers.Dense(2,activation = "softmax"))
-
-        # Can you guess what the current output shape is at this point? Probably not.
-        # Let's just print it:
-        self.model.summary()               
-        
-        
-         
-class MyModel10r():
-    
-    def __init__(self,ctx_type):
-        self.ctx_type=ctx_type
-        self.model = keras.Sequential()
-        self.model.add(keras.Input(shape=(ctx_type,)))  # contexts
-        self.model.add(layers.Dense(2*ctx_type,activation="relu"))
-        self.model.add(layers.Lambda(lambda x: keras.backend.round(1000*x)/1000))
-        #self.model.add(layers.Dense(50,activation="relu"))
-        # Finally, we add a classification layer.
-        self.model.add(layers.Dense(2,activation = "softmax"))
-
-        # Can you guess what the current output shape is at this point? Probably not.
-        # Let's just print it:
-        self.model.summary()            
-        
-        
-
-class intModel10():
-    
-    def __init__(self,ctx_type,C1,C2):
-        self.ctx_type=ctx_type
-        self.model = keras.Sequential()
-        self.model.add(keras.Input(shape=(ctx_type,),dtype='int64'))  # contexts
-        self.model.add(layers.Dense(2*ctx_type,activation="relu"))
-
-        #self.model.add(layers.Dense(50,activation="relu"))
-        # Finally, we add a classification layer.
-        self.model.add(layers.Dense(2,activation = None))
-        
-        self.model.add(layers.Lambda(lambda x: x/(C1*C2)))
-
-        self.model.add(layers.Softmax())
-        # Can you guess what the current output shape is at this point? Probably not.
-        # Let's just print it:
-        self.model.summary()            
 
 
-class intModel10_2():
-    
-    def __init__(self,ctx_type,C1,C2,M):
-        self.ctx_type=ctx_type
-        self.model = keras.Sequential()
-        self.model.add(keras.Input(shape=(ctx_type,),dtype='int64'))  # contexts
-        self.model.add(layers.Dense(2*ctx_type,activation=None))
-        self.model.add(layers.Lambda(lambda x: x/C1))
-        self.model.add(layers.ReLU())
-        self.model.add(layers.Lambda(lambda x: keras.backend.round(x*(2**M))))
         
-        
-        
-        # Finally, we add a classification layer.
-        self.model.add(layers.Dense(2,activation = None))
-        
-        self.model.add(layers.Lambda(lambda x: x/(C2*(2**M))))
 
-        self.model.add(layers.Softmax())
-        # Can you guess what the current output shape is at this point? Probably not.
-        # Let's just print it:
-        self.model.summary()            
-
-class tfint10_2():
-    
-    def __init__(self,ctx_type,C1,C2,M,iw1,ib1,iw2,ib2):
-            
-        tf1.disable_eager_execution()
-        self.input = tf1.placeholder(dtype='int64',shape=[None,ctx_type])
         
-        self.w1 = tf1.Variable(iw1,dtype='int64') 
-        self.b1 = tf1.Variable(ib1,dtype='int64') 
-        
-        self.o1 = tf1.nn.relu((tf1.matmul(self.input,self.w1)+self.b1)/C1)
-        self.o2 = tf1.cast(tf1.round(self.o1*(2**M)),'int64')
-    
-        self.w2 = tf1.Variable(iw2,dtype='int64') 
-        self.b2 = tf1.Variable(ib2,dtype='int64') 
 
-        self.output = tf1.nn.softmax((tf1.matmul(self.o2,self.w2)+self.b2)/(C2*(2**M)))
+          
 
 
 

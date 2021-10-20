@@ -37,7 +37,7 @@ lambda_wr = 0
 from models import tfModel10 as mymodel
 
 
-minprob= 0.0001#0.01
+minprob= 0#.0001#0.01
 ctx_type=100
 #%%
 val_data_dir = '/path/to/val_data/'
@@ -74,7 +74,7 @@ vdisc_ind = np.argmax(vtot_counts)
 #%%
 
 curr_date = datetime.now().strftime("%Y%m%d-%H%M%S")
-logdir = '/home/emre/Documents/train_logs/' + curr_date + '/'
+logdir = 'train_logs/' + curr_date + '/'
 
 
 os.mkdir(logdir)
@@ -97,7 +97,7 @@ tfcounts = tf1.placeholder(dtype='float',shape = [None,2])
 
 
 # loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0])+tfcounts[:,1]*tf1.log(mdl.output[:,1]))
-cl_loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0]+minprob) + tfcounts[:,1]*tf1.log(mdl.output[:,1]+minprob))/tf1.reduce_sum(tfcounts[:,1])
+cl_loss = -tf1.reduce_sum(tfcounts[:,0]*tf1.log(mdl.output[:,0]+minprob) + tfcounts[:,1]*tf1.log(mdl.output[:,1]+minprob))
 
 wr_loss = lambda_wr*(tf1.reduce_mean(mdl.w1)+tf1.reduce_mean(mdl.b1)+tf1.reduce_mean(mdl.w2)+tf1.reduce_mean(mdl.b2))
 

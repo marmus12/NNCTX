@@ -37,8 +37,36 @@ class tfModel10():
 
         self.w2 = tf1.Variable(xinitializer(shape=(2*ctx_type,2))) 
         self.b2 = tf1.Variable(zinitializer(shape=(2,))) 
-        self.output = tf1.nn.softmax(tf1.matmul(self.o1,self.w2)+self.b2)        
+        self.output = tf1.nn.softmax(tf1.matmul(self.o1,self.w2)+self.b2)      
+      
+class tfModel10_test():
+    
+    def __init__(self,ckpt_path):
+        ori_weights = np.load(ckpt_path,allow_pickle=True)[()]
+        w1 = ori_weights[0]
+        b1 = ori_weights[1]
+        w2 = ori_weights[2]
+        b2 = ori_weights[3]
+      
+        self.ctx_type = w1.shape[0]        
         
+
+        # intwlist = [intw1,intb1,intw2,intb2]    
+        tf1.disable_eager_execution()
+        self.input = tf1.placeholder(dtype='float',shape=[None,self.ctx_type])
+        
+        self.w1 = tf1.Variable(w1) 
+        self.b1 = tf1.Variable(b1) 
+        
+        self.o1 = tf1.nn.relu((tf1.matmul(self.input,self.w1)+self.b1))
+
+    
+        self.w2 = tf1.Variable(w2) 
+        self.b2 = tf1.Variable(b2) 
+
+        self.output = tf1.nn.softmax((tf1.matmul(self.o1,self.w2)+self.b2))   
+
+      
 class tfint10_3():
     
     def __init__(self,ckpt_path,M=14,Ne=10):

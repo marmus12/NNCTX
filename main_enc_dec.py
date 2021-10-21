@@ -12,7 +12,7 @@ import os, sys
 
 
 import tensorflow.compat.v1 as tf1
-from models import tfint10_3
+from models import tfint10_3,tfModel10_test
 from ac_functs import ac_model2
 from usefuls import show_time_spent,compare_Locations,get_dir_size
 
@@ -47,7 +47,11 @@ if not GPU:
 enc_functs_file,log_id,ctx_type = get_model_info(model_type)
 exec('from '+enc_functs_file+ ' import ENCODE_DECODE')
 ckpt_path = ckpt_dir+log_id+'/checkpoint.npy'
-nn_model = tfint10_3(ckpt_path)
+
+if model_type=='NNOC':
+    nn_model = tfint10_3(ckpt_path)
+else:
+    nn_model = tfModel10_test(ckpt_path)
 #################################################################
 
 

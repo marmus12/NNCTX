@@ -49,32 +49,7 @@ def dilate_Loc(lrGT):
     return LocM
 
 
-def dilate_Loc2(lrGT): 
 
-
-    PatEl = np.array( [[0, 0, 0],
-                       [1, 0, 0],
-                       [0, 1, 0],
-                       [1, 1, 0],
-                       [0, 0, 1],
-                       [1, 0, 1],
-                       [0, 1, 1],
-                       [1, 1, 1]])
-                       
-
-    llrGT = lrGT.shape[0]
-    BlockiM = np.zeros([0,3],'int')
-    Aligns = np.zeros((0,),'int')
-    for iloc in range(8):    # % size(PatEl,1) = 8
-        iv3 = PatEl[iloc,:]
-        Blocki = lrGT*2+iv3
-        BlockiM = np.concatenate((BlockiM,Blocki),0) 
-        Aligns = np.concatenate((Aligns,iloc*np.ones((llrGT,),'int8')),0) 
-        
-    # LocM,iC = np.unique(BlockiM,return_inverse=True,axis=0)
-    # LocM2 = BlockiM2[iC]#np.unique(BlockiM2,axis=0)
-    
-    return BlockiM,Aligns
 
 def pcread(ply_path):
     pcd = open3d.io.read_point_cloud(ply_path )

@@ -5,9 +5,12 @@ Created on Mon Jun  7 16:19:16 2021
 
 @author: root
 """
-def get_model_info(model_type):
+def get_model_info(model_type,for_train=False):
     if model_type=='fNNOC':
-        enc_functs_file = 'enc_functs_fast45d'
+        if for_train:
+            enc_functs_file = 'enc_functs_fast44d'
+        else:
+            enc_functs_file = 'enc_functs_fast45d'
         log_id = '20210421-180239'
         ctx_type = 100
     elif model_type=='fNNOC1':

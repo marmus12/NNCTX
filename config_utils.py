@@ -26,10 +26,10 @@ def get_model_info(model_type,for_train=False):
         log_id ='20210607-161634' 
         ctx_type = 36
     elif model_type=='NNOC':
-#        if for_train:
-        enc_functs_file = 'enc_functs_slow35'
- #       else:
- #           enc_functs_file = 'enc_functs_slow38'    
+        if for_train:
+            enc_functs_file = 'enc_functs_slow35'
+        else:
+            enc_functs_file = 'enc_functs_slow35nft'    
         log_id = '20210409-225535'#'20210415-222905'#
         ctx_type = 100
     else:

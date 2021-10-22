@@ -7,7 +7,7 @@ Created on Mon Jun  7 16:19:16 2021
 """
 def get_model_info(model_type):
     if model_type=='fNNOC':
-        enc_functs_file = 'enc_functs_fast44d'
+        enc_functs_file = 'enc_functs_fast45d'
         log_id = '20210421-180239'
         ctx_type = 100
     elif model_type=='fNNOC1':
@@ -19,7 +19,7 @@ def get_model_info(model_type):
         log_id = '20210606-011442'  
         ctx_type = 50      
     elif model_type=='fNNOC3':
-        enc_functs_file = 'enc_functs_fast44d'
+        enc_functs_file = 'enc_functs_fast45d'
         log_id ='20210607-161634' 
         ctx_type = 36
     elif model_type=='NNOC':

@@ -27,7 +27,7 @@ samples = ['andrew10','soldier']
 nfr_per_samples = [1,1]
 ######################
 
-enc_functs_file,dummy,temp_type = get_model_info(model_type)
+enc_functs_file,dummy,temp_type = get_model_info(model_type,for_train=True)
 out_dir = root_dir+'data_'+str(temp_type)+'/'
 
 #%%

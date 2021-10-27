@@ -29,7 +29,7 @@ def get_model_info(model_type,for_train=False):
         if for_train:
             enc_functs_file = 'enc_functs_slow35'
         else:
-            enc_functs_file = 'enc_functs_slow35nft'    
+            enc_functs_file = 'enc_functs_slow38'    
         log_id = '20210409-225535'#'20210415-222905'#
         ctx_type = 100
     else:

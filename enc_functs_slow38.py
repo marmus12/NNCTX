@@ -156,19 +156,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
                 for iBB in range(StartStopLength[icPC,0],StartStopLength[icPC,1]+1):    
                     BWTrue[globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
         
-            # %% 0.1 Mark the PREVIOUS SECTION TRUE points on BWTrue
-            
-            
-            # if(icPC > 0):
-            #     if( StartStopLength[icPC-1,1] > 0 ):
-            #         for iBB in range(StartStopLength[icPC-1,0],StartStopLength[icPC-1,1]+1):
-            #             BWTrue1[ globz.Loc[iBB,2], globz.Loc[iBB,0]] = 1
-            # %% 0.2 Mark the PREVIOUS_PREVIOUS SECTION TRUE points on BWTrue
 
-            # if(icPC > 1):
-            #     if( StartStopLength[icPC-2,0] > 0 ):
-            #         for iBB in range(StartStopLength[icPC-2,0],StartStopLength[icPC-2,1]+1):
-            #             BWTrue2[globz.Loc[iBB,2], globz.Loc[iBB,0] ] = 1
 
             BWTrue1M = np.zeros( SectSize,'bool')
             if(icPC < ncPC):
@@ -177,12 +165,6 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
 
                             BWTrue1M[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
 
-
-
-            # if( StartStopLengthM[icPC,1] > 0 ):
-            #     for iBB in range(StartStopLengthM[icPC,0],StartStopLengthM[icPC,1]+1):
-            #         # try:
-            #         BWTrueM[ globz.LocM[iBB,2], globz.LocM[iBB,0]] = 1
             
             iBBr_prev = globz.iBBr
 
@@ -232,33 +214,32 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
                 if ENC :
                     symb = BWTrue[iz, ix]
                     probs = Tprobs[iTemp,:]
-                if not ENC: #DECODER
+                else: #DECODER
             
                     probs = sess.run(nn_model.output,feed_dict={nn_model.input:Temp[iTemp:(iTemp+1),:]})[0,:]
                 
-                if not for_train:
-                    freq = np.ceil(probs*(2**14)).astype('int')#+1
-                    freqlist = list(freq)
-            
-                        
-                    freqs = arc.SimpleFrequencyTable(freqlist )
-             
-                 
-                    
-                    if ENC:
-                        ac_model.encode_symbol(freqs,symb)
-            
-            
-                    else:#DECODER
-                        symb = ac_model.decode_symbol(freqs)  
-            
-                        # BWTrue[iz, ix] = symb
+                # if not for_train:
+                freq = np.ceil(probs*(2**14)).astype('int')#+1
+                freqlist = list(freq)
         
-                        if symb:            
-                            globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
-                            globz.iBBr +=1
-                            
-                        BWTrueM[iz, ix] = symb
+                    
+                freqs = arc.SimpleFrequencyTable(freqlist )
+         
+             
+                
+                if ENC:
+                    ac_model.encode_symbol(freqs,symb)
+        
+        
+                else:#DECODER
+                    symb = ac_model.decode_symbol(freqs)  
+        
+    
+                    if symb:            
+                        globz.Loc[globz.iBBr,:] = [ix,icPC,iz] 
+                        globz.iBBr +=1
+                        
+                    BWTrueM[iz, ix] = symb
                 
             BWTrue2 = BWTrue1
             BWTrue1 = BWTrueM
@@ -282,7 +263,7 @@ def get_temps_dests2(ctx_type,ENC=True,nn_model ='dec',ac_model='dec_and_enc',ma
     if ENC and level==ori_level:        
 
         freqlist = [10,10]
-        freqs = arc.CheckedFrequencyTable(arc.SimpleFrequencyTable(freqlist )) 
+        freqs = arc.SimpleFrequencyTable(freqlist )
         for i_s in range(64):
             ac_model.encode_symbol(freqs,0)
     
